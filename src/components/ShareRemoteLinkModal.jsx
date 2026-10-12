@@ -11,13 +11,15 @@ export default function ShareRemoteLinkModal({
 
   if (!isOpen) return null;
 
-  // Detectar URL actual o IP local
-  const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
-  // Si está en localhost, sugerir la IP de red local detectada (192.168.0.102)
-  const isLocalhost = currentOrigin.includes('localhost') || currentOrigin.includes('127.0.0.1');
-  const localNetworkUrl = isLocalhost ? currentOrigin.replace(/localhost|127\.0\.0\.1/, '192.168.0.102') : currentOrigin;
+  // Detectar URL en vivo o URL actual
+  const liveProductionUrl = 'https://leonexu7.github.io/karate-brackets-pro/';
+  const currentUrl = typeof window !== 'undefined'
+    ? (window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
+        ? liveProductionUrl
+        : window.location.href.split('#')[0].split('?')[0])
+    : liveProductionUrl;
 
-  const finalShareUrl = customUrl.trim() || localNetworkUrl;
+  const finalShareUrl = customUrl.trim() || currentUrl;
 
   const invitationMessage =
     `🥋 *CONVOCATORIA Y REGISTRO OFICIAL - ${tournament?.name || 'TORNEO DE KARATE SHITO-KAI'}*\n\n` +
