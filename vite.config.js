@@ -200,7 +200,7 @@ function tournamentApiPlugin() {
 }
 
 export default defineConfig({
-  base: './',
+  base: process.env.NODE_ENV === 'production' ? '/karate-brackets-pro/' : '/',
   plugins: [react(), tournamentApiPlugin()],
   server: {
     port: 3000,
