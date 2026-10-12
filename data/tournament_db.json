@@ -1,0 +1,17 @@
+{
+  "tournament": {
+    "id": "torneo-oficial-2026",
+    "name": "Copa Nacional de Karate Do 2026",
+    "date": "2026-10-24",
+    "venue": "Gimnasio Olímpico Principal",
+    "tatamisCount": 3,
+    "organizer": "Comité Organizador Oficial de Karate Do",
+    "adminKey": "karate2026",
+    "feeSingleModality": 300,
+    "feeDoubleModality": 300,
+    "feeCoachBadge": 0
+  },
+  "dojos": [],
+  "athletes": [],
+  "teams": []
+}
