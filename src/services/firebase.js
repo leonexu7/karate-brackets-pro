@@ -15,7 +15,17 @@ import {
 
 const STORAGE_CONFIG_KEY = 'karate_firebase_cloud_config_v1';
 
-// Obtener configuración desde variables de entorno VITE o desde localStorage
+export const DEFAULT_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBAv_Ofl7V497CO278BmyGruwPzPpQmaXY",
+  authDomain: "torneo--de-karate.firebaseapp.com",
+  projectId: "torneo--de-karate",
+  storageBucket: "torneo--de-karate.firebasestorage.app",
+  messagingSenderId: "439672085234",
+  appId: "1:439672085234:web:c85cc9d8125c6c81248e6b",
+  measurementId: "G-Y6X7R2245B"
+};
+
+// Obtener configuración desde localStorage, variables de entorno VITE o configuración por defecto
 export function getStoredFirebaseConfig() {
   try {
     const raw = localStorage.getItem(STORAGE_CONFIG_KEY);
@@ -39,7 +49,8 @@ export function getStoredFirebaseConfig() {
     };
   }
 
-  return null;
+  // Configuración oficial activa del proyecto
+  return DEFAULT_FIREBASE_CONFIG;
 }
 
 export function saveFirebaseConfig(config) {
