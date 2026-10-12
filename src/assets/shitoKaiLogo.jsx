@@ -1,4 +1,5 @@
 import React from 'react';
+import shitokaiLogoImg from './shitokai_logo.png';
 
 /**
  * Escudo Oficial Shito-Kai Karate-Do México
@@ -6,7 +7,7 @@ import React from 'react';
  */
 export const ShitoKaiLogo = ({ className = "w-9 h-9", alt = "Escudo Oficial Shito-Kai", ...props }) => (
   <img
-    src="/shitokai_logo.png"
+    src={shitokaiLogoImg}
     alt={alt}
     className={`shrink-0 object-contain rounded-full ${className}`}
     loading="eager"

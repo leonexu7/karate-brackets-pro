@@ -31,6 +31,7 @@ import {
 } from '../constants/belts';
 import { MODALITIES, calculateAge, findAgeDivision, findWeightDivision } from '../constants/categories';
 import { ShitoKaiLogo } from '../assets/shitoKaiLogo';
+import sakuraTreeImg from '../assets/sakura_tree.png';
 import { downloadExcelTemplate, parseExcelFile } from '../utils/excelHandler';
 
 export default function TeacherRegistrationView({
@@ -366,7 +367,7 @@ export default function TeacherRegistrationView({
         aria-hidden="true"
       >
         <img
-          src="/sakura_tree.png"
+          src={sakuraTreeImg}
           alt=""
           className="w-full max-w-lg sm:max-w-2xl md:max-w-3xl opacity-20 md:opacity-25 object-contain object-top-right select-none"
           style={{ mixBlendMode: 'multiply' }}
@@ -379,7 +380,7 @@ export default function TeacherRegistrationView({
           {/* ÁRBOL DE CEREZO OFICIAL EN LA PARTE DERECHA */}
           <div className="absolute right-0 top-0 bottom-0 flex items-center pr-1 sm:pr-4 pointer-events-none opacity-85">
             <img
-              src="/sakura_tree.png"
+              src={sakuraTreeImg}
               alt="Cerezo Shito-Kai"
               className="w-40 sm:w-64 md:w-80 h-32 sm:h-44 object-contain object-right"
               style={{ mixBlendMode: 'multiply' }}
