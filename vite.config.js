@@ -200,6 +200,7 @@ function tournamentApiPlugin() {
 }
 
 export default defineConfig({
+  base: './',
   plugins: [react(), tournamentApiPlugin()],
   server: {
     port: 3000,
