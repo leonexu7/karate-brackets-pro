@@ -5,28 +5,6 @@
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23991B1B'><circle cx='12' cy='12' r='10'/></svg>" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Karate Brackets Pro - Sistema Oficial de Torneos</title>
-    <script>
-      window.addEventListener('error', function(e) {
-        var box = document.getElementById('debug-error-box');
-        if (!box) {
-          box = document.createElement('div');
-          box.id = 'debug-error-box';
-          box.style.cssText = 'position:fixed;top:10px;left:10px;right:10px;z-index:999999;background:#ffebee;border:2px solid #c62828;padding:16px;border-radius:8px;font-family:monospace;font-size:14px;color:#b71c1c;';
-          document.body.appendChild(box);
-        }
-        box.innerHTML += '<div><b>Error JS:</b> ' + e.message + '<br><small>' + e.filename + ':' + e.lineno + '</small><br><pre>' + (e.error ? e.error.stack : '') + '</pre></div>';
-      });
-      window.addEventListener('unhandledrejection', function(e) {
-        var box = document.getElementById('debug-error-box');
-        if (!box) {
-          box = document.createElement('div');
-          box.id = 'debug-error-box';
-          box.style.cssText = 'position:fixed;top:10px;left:10px;right:10px;z-index:999999;background:#ffebee;border:2px solid #c62828;padding:16px;border-radius:8px;font-family:monospace;font-size:14px;color:#b71c1c;';
-          document.body.appendChild(box);
-        }
-        box.innerHTML += '<div><b>Rechazo de Promesa:</b> ' + (e.reason && e.reason.stack ? e.reason.stack : e.reason) + '</div>';
-      });
-    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">

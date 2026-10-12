@@ -337,6 +337,8 @@ export default function TeacherRegistrationView({
   // Cálculo financiero de cuotas de inscripción para este profesor
   const singleModalityAthletes = myRegisteredAthletes.filter(a => (a.modalities || []).length === 1);
   const doubleModalityAthletes = myRegisteredAthletes.filter(a => (a.modalities || []).length >= 2);
+  const totalSingleFee = singleModalityAthletes.length * feeSingle;
+  const totalDoubleFee = doubleModalityAthletes.length * feeDouble;
   const totalGrandPayment = totalSingleFee + totalDoubleFee;
 
   const handleSendWhatsAppReport = () => {
