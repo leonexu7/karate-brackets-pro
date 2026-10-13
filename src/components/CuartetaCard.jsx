@@ -44,18 +44,6 @@ export default function CuartetaCard({ cuarteta, tournament, onMatchWinner }) {
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden relative">
-      {/* Silueta deportiva oficial de fondo (sutil como marca de agua, sin estorbar el podio ni los textos) */}
-      <div
-        className="absolute right-8 top-16 pointer-events-none select-none z-0"
-        style={{ opacity: 0.04 }}
-      >
-        <img
-          src={isFemale ? silhouetteFemale : silhouetteMale}
-          alt={isFemale ? "Silueta Femenil" : "Silueta Varonil"}
-          className="w-56 h-56 object-contain"
-        />
-      </div>
-
       {/* Cabecera de la Cuarteta con Shito-Kai */}
       <div className="bg-slate-900 text-white px-5 py-3 border-b-2 border-rose-500 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-3">
@@ -233,6 +221,23 @@ export default function CuartetaCard({ cuarteta, tournament, onMatchWinner }) {
                 </div>
               </div>
               {matches[2].winner?.id === matches[2].ao?.id && <Trophy className="w-4 h-4 text-amber-600" />}
+            </div>
+          </div>
+
+          {/* Emblema Oficial en el espacio central libre */}
+          <div className="border border-slate-200/90 rounded-xl bg-gradient-to-b from-slate-50/80 via-white to-slate-50/60 p-3 text-center shadow-xs flex flex-col items-center justify-center">
+            <div className="relative my-0.5">
+              <img
+                src={isFemale ? silhouetteFemale : silhouetteMale}
+                alt={isFemale ? "Silueta Femenil" : "Silueta Varonil"}
+                className="w-24 h-24 object-contain mx-auto"
+              />
+            </div>
+            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-900 text-white text-[9px] font-bold uppercase tracking-wider mt-1">
+              <span>{isFemale ? 'Rama Femenil' : 'Rama Varonil'}</span>
+            </div>
+            <div className="text-[9px] text-slate-500 font-medium mt-1">
+              Shito-Kai • Formativa Infantil
             </div>
           </div>
         </div>

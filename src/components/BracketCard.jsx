@@ -76,6 +76,31 @@ export default function BracketCard({ bracket, tournament }) {
                     </div>
                   ))}
                 </div>
+
+                {/* Si es la ronda final, aprovechamos el amplio espacio libre vertical para ubicar el emblema oficial de la rama */}
+                {rIdx === rounds.length - 1 && (
+                  <div className="mt-6 border border-slate-200/90 rounded-2xl bg-gradient-to-b from-slate-50/80 via-white to-slate-50/60 p-4 text-center shadow-xs flex flex-col items-center justify-center">
+                    <div className="w-8 h-8 rounded-full bg-rose-50 border border-rose-200 flex items-center justify-center mb-1.5 shadow-2xs">
+                      <ShitoKaiLogo className="w-5 h-5" />
+                    </div>
+                    <div className="relative my-1">
+                      <img
+                        src={isFemale ? silhouetteFemale : silhouetteMale}
+                        alt={isFemale ? "Silueta Femenil" : "Silueta Varonil"}
+                        className="w-32 h-32 object-contain mx-auto transition-transform hover:scale-105"
+                      />
+                    </div>
+                    <div className="mt-1.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900 text-white text-[10px] font-bold uppercase tracking-wider shadow-2xs">
+                      <span>{isFemale ? 'Rama Femenil' : 'Rama Varonil'}</span>
+                    </div>
+                    <div className="text-[10px] font-semibold text-slate-600 mt-1">
+                      Shito-Kai Karate-Do
+                    </div>
+                    <div className="text-[9px] text-slate-400">
+                      Tatami {stdBracket.tatami || bracket.tatami || 1} • Gráfica Oficial
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
@@ -221,18 +246,6 @@ export default function BracketCard({ bracket, tournament }) {
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden relative">
-      {/* Silueta deportiva oficial de fondo (marca de agua en la zona superior de llaves, sin tapar el podio) */}
-      <div
-        className="absolute right-8 top-16 pointer-events-none select-none z-0"
-        style={{ opacity: 0.04 }}
-      >
-        <img
-          src={isFemale ? silhouetteFemale : silhouetteMale}
-          alt={isFemale ? "Silueta Femenil" : "Silueta Varonil"}
-          className="w-64 h-64 object-contain"
-        />
-      </div>
-
       {/* Cabecera de la Gráfica */}
       <div className="bg-slate-900 text-white px-5 py-3 border-b-2 border-rose-500 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
@@ -340,6 +353,26 @@ export default function BracketCard({ bracket, tournament }) {
                   </div>
                   <div className="p-2.5 bg-slate-100 rounded-lg text-center font-semibold text-slate-800">
                     Ganador SF-1 (Aka) vs Ganador SF-2 (Ao)
+                  </div>
+                </div>
+
+                {/* Emblema Oficial de la Rama en el espacio central de cruces */}
+                <div className="border border-slate-200/90 rounded-2xl bg-gradient-to-b from-slate-50/80 via-white to-slate-50/60 p-4 text-center shadow-xs flex flex-col items-center justify-center max-w-sm mx-auto">
+                  <div className="w-8 h-8 rounded-full bg-rose-50 border border-rose-200 flex items-center justify-center mb-1.5 shadow-2xs">
+                    <ShitoKaiLogo className="w-5 h-5" />
+                  </div>
+                  <div className="relative my-1">
+                    <img
+                      src={isFemale ? silhouetteFemale : silhouetteMale}
+                      alt={isFemale ? "Silueta Femenil" : "Silueta Varonil"}
+                      className="w-28 h-28 object-contain mx-auto"
+                    />
+                  </div>
+                  <div className="mt-1 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900 text-white text-[10px] font-bold uppercase tracking-wider shadow-2xs">
+                    <span>{isFemale ? 'Rama Femenil' : 'Rama Varonil'}</span>
+                  </div>
+                  <div className="text-[10px] font-semibold text-slate-600 mt-1">
+                    Shito-Kai Karate-Do • Cruces Finales
                   </div>
                 </div>
               </div>
