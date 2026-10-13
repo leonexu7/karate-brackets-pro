@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Trophy, Printer, Users, Check, ChevronRight, FileText } from 'lucide-react';
+import { Trophy, Printer, Users, Check, ChevronRight, FileText, Award } from 'lucide-react';
 import { ShitoKaiLogo } from '../assets/shitoKaiLogo';
 import silhouetteFemale from '../assets/silhouette_female.png';
 import silhouetteMale from '../assets/silhouette_male.png';
@@ -84,6 +84,144 @@ export default function BracketCard({ bracket, tournament }) {
     );
   };
 
+  // Renderizador del bloque oficial de Podio y Resultados de Mesa para jueceo manual
+  const renderPodiumSection = () => {
+    return (
+      <div className="mt-6 border-t border-slate-200 pt-5">
+        <div className="bg-slate-50/90 border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs">
+          {/* Encabezado del Podio */}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3 mb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+                <Award className="w-5 h-5 text-amber-600" />
+              </div>
+              <div>
+                <h4 className="font-bold text-sm text-slate-900 tracking-tight">
+                  Registro Oficial de Resultados y Podio (Mesa de Tatami)
+                </h4>
+                <p className="text-[11px] text-slate-500">
+                  Espacio oficial para jueceo manual, registro de medallas y firmas de tatami
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-semibold bg-white border border-slate-200 px-2.5 py-1 rounded-md text-slate-700 shadow-2xs">
+                Tatami {bracket.tatami || 1} • Shito-Kai
+              </span>
+            </div>
+          </div>
+
+          {/* Cuadrícula de 4 Medallistas: 1° Oro, 2° Plata, 3° Bronce 1, 3° Bronce 2 */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            {/* 1º ORO */}
+            <div className="bg-amber-50/70 border-2 border-amber-300 rounded-xl p-3 space-y-2 relative shadow-2xs">
+              <div className="flex items-center justify-between">
+                <span className="bg-amber-500 text-white font-black text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  1º ORO
+                </span>
+                <span className="text-[10px] font-bold text-amber-800 uppercase">Campeón</span>
+              </div>
+              <div className="space-y-1.5 pt-1">
+                <div>
+                  <div className="text-[10px] font-bold text-slate-700">Atleta:</div>
+                  <div className="border-b-2 border-dashed border-amber-300 min-h-[22px] flex items-center text-xs font-semibold text-slate-900 px-1">
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold text-slate-700">Dojo / Escuela:</div>
+                  <div className="border-b-2 border-dashed border-amber-300 min-h-[20px] flex items-center text-[11px] text-slate-600 px-1">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 2º PLATA */}
+            <div className="bg-slate-50 border-2 border-slate-300 rounded-xl p-3 space-y-2 relative shadow-2xs">
+              <div className="flex items-center justify-between">
+                <span className="bg-slate-500 text-white font-black text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  2º PLATA
+                </span>
+                <span className="text-[10px] font-bold text-slate-600 uppercase">Subcampeón</span>
+              </div>
+              <div className="space-y-1.5 pt-1">
+                <div>
+                  <div className="text-[10px] font-bold text-slate-700">Atleta:</div>
+                  <div className="border-b-2 border-dashed border-slate-300 min-h-[22px] flex items-center text-xs font-semibold text-slate-900 px-1">
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold text-slate-700">Dojo / Escuela:</div>
+                  <div className="border-b-2 border-dashed border-slate-300 min-h-[20px] flex items-center text-[11px] text-slate-600 px-1">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 3º BRONCE 1 */}
+            <div className="bg-amber-900/5 border border-amber-800/30 rounded-xl p-3 space-y-2 relative shadow-2xs">
+              <div className="flex items-center justify-between">
+                <span className="bg-amber-800 text-white font-black text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  3º BRONCE
+                </span>
+                <span className="text-[10px] font-bold text-amber-900 uppercase">Semifinalista 1</span>
+              </div>
+              <div className="space-y-1.5 pt-1">
+                <div>
+                  <div className="text-[10px] font-bold text-slate-700">Atleta:</div>
+                  <div className="border-b-2 border-dashed border-amber-800/30 min-h-[22px] flex items-center text-xs font-semibold text-slate-900 px-1">
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold text-slate-700">Dojo / Escuela:</div>
+                  <div className="border-b-2 border-dashed border-amber-800/30 min-h-[20px] flex items-center text-[11px] text-slate-600 px-1">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 3º BRONCE 2 */}
+            <div className="bg-amber-900/5 border border-amber-800/30 rounded-xl p-3 space-y-2 relative shadow-2xs">
+              <div className="flex items-center justify-between">
+                <span className="bg-amber-800 text-white font-black text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  3º BRONCE
+                </span>
+                <span className="text-[10px] font-bold text-amber-900 uppercase">Semifinalista 2</span>
+              </div>
+              <div className="space-y-1.5 pt-1">
+                <div>
+                  <div className="text-[10px] font-bold text-slate-700">Atleta:</div>
+                  <div className="border-b-2 border-dashed border-amber-800/30 min-h-[22px] flex items-center text-xs font-semibold text-slate-900 px-1">
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold text-slate-700">Dojo / Escuela:</div>
+                  <div className="border-b-2 border-dashed border-amber-800/30 min-h-[20px] flex items-center text-[11px] text-slate-600 px-1">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Pie de Validación de Mesa */}
+          <div className="mt-4 pt-3 border-t border-slate-200 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-slate-600">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-slate-700 shrink-0">Árbitro Central (Sushin):</span>
+              <span className="border-b border-slate-300 flex-1 min-h-[18px]"></span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-slate-700 shrink-0">Juez de Mesa:</span>
+              <span className="border-b border-slate-300 flex-1 min-h-[18px]"></span>
+            </div>
+            <div className="flex items-center justify-between md:justify-end gap-3 text-[11px] text-slate-500">
+              <span>Hora Cierre: <strong>[____:____]</strong></span>
+              <span className="bg-slate-200/60 px-2 py-0.5 rounded text-[10px] font-medium">Validado Shito-Kai</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const isFemale = bracket.gender === 'F' || (bracket.categoryName && bracket.categoryName.toUpperCase().includes('FEMENIL'));
 
   return (
@@ -163,7 +301,7 @@ export default function BracketCard({ bracket, tournament }) {
         {isMultiPage ? (
           activePageIndex === 2 ? (
             // Vista de Hoja 3: Cruces Finales
-            <div className="max-w-xl mx-auto py-6 space-y-6">
+            <div className="max-w-2xl mx-auto py-4 space-y-6">
               <div className="text-center space-y-1">
                 <h4 className="font-bold text-slate-900 text-base">Cruces de Semifinales y Gran Final</h4>
                 <p className="text-xs text-slate-500">Los clasificados de la Poule A (Hoja 1) se enfrentan a los de la Poule B (Hoja 2)</p>
@@ -207,12 +345,21 @@ export default function BracketCard({ bracket, tournament }) {
                   </div>
                 </div>
               </div>
+
+              {/* Registro Oficial de Podio en Hoja 3 */}
+              {renderPodiumSection()}
             </div>
           ) : (
-            renderBracketTree(bracket.pages[activePageIndex].bracket)
+            <div>
+              {renderBracketTree(bracket.pages[activePageIndex].bracket)}
+              {renderPodiumSection()}
+            </div>
           )
         ) : (
-          renderBracketTree(bracket)
+          <div>
+            {renderBracketTree(bracket)}
+            {renderPodiumSection()}
+          </div>
         )}
       </div>
     </div>

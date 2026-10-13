@@ -360,45 +360,69 @@ export function renderCuartetaPage(doc, cuarteta, tournament) {
 
   // 1º ORO
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
+  doc.setFontSize(7.5);
   doc.setTextColor(217, 119, 6);
-  doc.text('1º LUGAR (ORO):', podioX + 4, 61);
+  doc.text('1º LUGAR (ORO):', podioX + 4, 58);
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(6.5);
+  doc.setFontSize(6);
   doc.setTextColor(...COLOR_MUTED);
-  doc.text('Ganador Gran Final', podioX + podioW - 4, 61, { align: 'right' });
+  doc.text('Ganador Gran Final', podioX + podioW - 4, 58, { align: 'right' });
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(6.5);
+  doc.setTextColor(...COLOR_DARK);
+  doc.text('Atleta:', podioX + 4, 64);
   doc.setDrawColor(...COLOR_LINE);
-  doc.line(podioX + 4, 69, podioX + podioW - 4, 69); // Línea amplia para escribir nombre
+  doc.line(podioX + 13, 64.5, podioX + podioW - 4, 64.5);
+  doc.text('Dojo:', podioX + 4, 70.5);
+  doc.line(podioX + 13, 71, podioX + podioW - 4, 71);
 
   // 2º PLATA
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
+  doc.setFontSize(7.5);
   doc.setTextColor(100, 116, 139);
-  doc.text('2º LUGAR (PLATA):', podioX + 4, 82);
+  doc.text('2º LUGAR (PLATA):', podioX + 4, 79);
   doc.setFont('helvetica', 'normal');
+  doc.setFontSize(6);
+  doc.text('Subcampeón Gran Final', podioX + podioW - 4, 79, { align: 'right' });
+  doc.setFont('helvetica', 'bold');
   doc.setFontSize(6.5);
-  doc.text('Subcampeón Gran Final', podioX + podioW - 4, 82, { align: 'right' });
-  doc.line(podioX + 4, 90, podioX + podioW - 4, 90); // Línea para escribir
+  doc.setTextColor(...COLOR_DARK);
+  doc.text('Atleta:', podioX + 4, 85);
+  doc.line(podioX + 13, 85.5, podioX + podioW - 4, 85.5);
+  doc.text('Dojo:', podioX + 4, 91.5);
+  doc.line(podioX + 13, 92, podioX + podioW - 4, 92);
 
   // 3º BRONCE 1
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
+  doc.setFontSize(7.5);
   doc.setTextColor(180, 83, 9);
-  doc.text('3º LUGAR (BRONCE):', podioX + 4, 103);
+  doc.text('3º LUGAR (BRONCE):', podioX + 4, 100);
   doc.setFont('helvetica', 'normal');
+  doc.setFontSize(6);
+  doc.text('Perdedor Combate 1', podioX + podioW - 4, 100, { align: 'right' });
+  doc.setFont('helvetica', 'bold');
   doc.setFontSize(6.5);
-  doc.text('Perdedor Combate 1', podioX + podioW - 4, 103, { align: 'right' });
-  doc.line(podioX + 4, 111, podioX + podioW - 4, 111); // Línea para escribir
+  doc.setTextColor(...COLOR_DARK);
+  doc.text('Atleta:', podioX + 4, 106);
+  doc.line(podioX + 13, 106.5, podioX + podioW - 4, 106.5);
+  doc.text('Dojo:', podioX + 4, 112.5);
+  doc.line(podioX + 13, 113, podioX + podioW - 4, 113);
 
   // 3º BRONCE 2
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
+  doc.setFontSize(7.5);
   doc.setTextColor(180, 83, 9);
-  doc.text('3º LUGAR (BRONCE):', podioX + 4, 124);
+  doc.text('3º LUGAR (BRONCE):', podioX + 4, 121);
   doc.setFont('helvetica', 'normal');
+  doc.setFontSize(6);
+  doc.text('Perdedor Combate 2', podioX + podioW - 4, 121, { align: 'right' });
+  doc.setFont('helvetica', 'bold');
   doc.setFontSize(6.5);
-  doc.text('Perdedor Combate 2', podioX + podioW - 4, 124, { align: 'right' });
-  doc.line(podioX + 4, 132, podioX + podioW - 4, 132); // Línea para escribir
+  doc.setTextColor(...COLOR_DARK);
+  doc.text('Atleta:', podioX + 4, 127);
+  doc.line(podioX + 13, 127.5, podioX + podioW - 4, 127.5);
+  doc.text('Dojo:', podioX + 4, 133.5);
+  doc.line(podioX + 13, 134, podioX + podioW - 4, 134);
 
   // Mensaje formativo
   doc.setFont('helvetica', 'italic');
@@ -410,8 +434,181 @@ export function renderCuartetaPage(doc, cuarteta, tournament) {
 }
 
 /**
+ * Dibuja el panel lateral derecho con el Podio Oficial (1°, 2°, 3°, 3°) y Mesa de Control
+ * siguiendo el estándar de torneos oficiales (Sportdata / WKF) con amplio espacio para rellenar a mano.
+ */
+function drawOfficialPodiumPanel(doc, x, w) {
+  // 1. Encabezado de la Mesa
+  doc.setFillColor(241, 245, 249);
+  doc.setDrawColor(...COLOR_LINE);
+  doc.setLineWidth(0.4);
+  doc.roundedRect(x, 38, w, 9.5, 1.5, 1.5, 'FD');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  doc.setTextColor(...COLOR_DARK);
+  doc.text('REGISTRO OFICIAL DE TATAMI', x + w / 2, 42.5, { align: 'center' });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(5.8);
+  doc.setTextColor(...COLOR_MUTED);
+  doc.text('Mesa de Jueceo • Resultados de Categoría', x + w / 2, 46, { align: 'center' });
+
+  // 2. Caja Destacada del Campeón (1º Lugar - Oro)
+  const champBoxY = 49.5;
+  const champBoxH = 25.5;
+  doc.setFillColor(255, 251, 235);
+  doc.setDrawColor(217, 119, 6);
+  doc.setLineWidth(0.6);
+  doc.roundedRect(x, champBoxY, w, champBoxH, 2, 2, 'FD');
+
+  // Cinta superior dorada
+  doc.setFillColor(217, 119, 6);
+  doc.roundedRect(x, champBoxY, w, 5.8, 2, 2, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.2);
+  doc.text('1º LUGAR — CAMPEÓN (ORO)', x + w / 2, champBoxY + 4.2, { align: 'center' });
+
+  // Líneas de Atleta y Dojo para Campeón
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(6.8);
+  doc.setTextColor(...COLOR_DARK);
+  doc.text('Atleta:', x + 3.5, champBoxY + 11.5);
+  doc.setDrawColor(...COLOR_LINE);
+  doc.setLineWidth(0.4);
+  doc.line(x + 13, champBoxY + 12.5, x + w - 3.5, champBoxY + 12.5);
+
+  doc.text('Dojo:', x + 3.5, champBoxY + 20);
+  doc.line(x + 13, champBoxY + 21, x + w - 3.5, champBoxY + 21);
+
+  // 3. Tabla Completa de Podio y Medallas (1°, 2°, 3°, 3°)
+  const podioTableY = 77;
+  const podioTableH = 78;
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(...COLOR_LINE);
+  doc.setLineWidth(0.5);
+  doc.roundedRect(x, podioTableY, w, podioTableH, 2, 2, 'FD');
+
+  // Cabecera oscura
+  doc.setFillColor(30, 41, 59);
+  doc.roundedRect(x, podioTableY, w, 6.5, 2, 2, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.2);
+  doc.text('PODIO Y MEDALLERO OFICIAL', x + w / 2, podioTableY + 4.5, { align: 'center' });
+
+  const rows = [
+    {
+      place: '1º ORO',
+      label: 'Oro',
+      sub: 'Ganador Final',
+      bgColor: [255, 251, 235],
+      badgeBg: [217, 119, 6],
+    },
+    {
+      place: '2º PLATA',
+      label: 'Plata',
+      sub: 'Finalista',
+      bgColor: [248, 250, 252],
+      badgeBg: [100, 116, 139],
+    },
+    {
+      place: '3º BRONCE',
+      label: 'Bronce 1',
+      sub: 'Semifinalista 1',
+      bgColor: [255, 255, 255],
+      badgeBg: [180, 83, 9],
+    },
+    {
+      place: '3º BRONCE',
+      label: 'Bronce 2',
+      sub: 'Semifinalista 2',
+      bgColor: [255, 255, 255],
+      badgeBg: [180, 83, 9],
+    },
+  ];
+
+  const rowH = 17.5;
+  rows.forEach((row, i) => {
+    const rowY = podioTableY + 6.8 + i * rowH;
+
+    // Fondo de la fila
+    doc.setFillColor(...row.bgColor);
+    doc.rect(x + 0.5, rowY, w - 1, rowH, 'F');
+
+    // Badge píldora con color de medalla
+    doc.setFillColor(...row.badgeBg);
+    doc.roundedRect(x + 3, rowY + 2.5, 17, 4.8, 1, 1, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(5.8);
+    doc.text(row.place, x + 11.5, rowY + 5.9, { align: 'center' });
+
+    // Subtítulo pequeño a la derecha
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(5.3);
+    doc.setTextColor(...COLOR_MUTED);
+    doc.text(row.sub, x + w - 3.5, rowY + 5.9, { align: 'right' });
+
+    // Línea de Atleta
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6.2);
+    doc.setTextColor(...COLOR_DARK);
+    doc.text('Atleta:', x + 3.5, rowY + 11.2);
+    doc.setDrawColor(...COLOR_LINE);
+    doc.line(x + 13, rowY + 11.7, x + w - 3.5, rowY + 11.7);
+
+    // Línea de Dojo
+    doc.text('Dojo:', x + 3.5, rowY + 15.5);
+    doc.line(x + 13, rowY + 16, x + w - 3.5, rowY + 16);
+
+    // Divisor entre filas
+    if (i < rows.length - 1) {
+      doc.setDrawColor(226, 232, 240);
+      doc.line(x + 2, rowY + rowH, x + w - 2, rowY + rowH);
+    }
+  });
+
+  // 4. Validación de Mesa y Firmas de Tatami
+  const sigBoxY = 157;
+  const sigBoxH = 37;
+  doc.setFillColor(248, 250, 252);
+  doc.setDrawColor(...COLOR_LINE);
+  doc.setLineWidth(0.4);
+  doc.roundedRect(x, sigBoxY, w, sigBoxH, 1.5, 1.5, 'FD');
+
+  doc.setFillColor(241, 245, 249);
+  doc.rect(x, sigBoxY, w, 5.5, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(6.5);
+  doc.setTextColor(...COLOR_DARK);
+  doc.text('VALIDACIÓN DE MESA DE TATAMI', x + w / 2, sigBoxY + 3.8, { align: 'center' });
+
+  // Campos de firma y hora
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(5.8);
+  doc.setTextColor(...COLOR_DARK);
+
+  doc.text('Árbitro Central (Sushin):', x + 3.5, sigBoxY + 10.5);
+  doc.setDrawColor(...COLOR_LINE);
+  doc.line(x + 3.5, sigBoxY + 16.5, x + w - 3.5, sigBoxY + 16.5);
+
+  doc.text('Juez de Mesa / Planillero:', x + 3.5, sigBoxY + 22.5);
+  doc.line(x + 3.5, sigBoxY + 28.5, x + w - 3.5, sigBoxY + 28.5);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(5.8);
+  doc.text('Hora Cierre: [____:____]', x + 3.5, sigBoxY + 34);
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(5.2);
+  doc.setTextColor(...COLOR_MUTED);
+  doc.text('Shito-Kai México', x + w - 3.5, sigBoxY + 34, { align: 'right' });
+}
+
+/**
  * Renderiza 1 Bracket estándar de 8 o 16 competidores por hoja horizontal
- * con líneas de llave profesionales, espacio subrayado para rellenar a mano y casillas [ ] de puntaje.
+ * con líneas de llave profesionales, espacio subrayado para rellenar a mano y casillas [ ] de puntaje,
+ * más panel derecho con Podio Oficial (1°, 2°, 3°, 3°) inspirado en Sportdata / WKF.
  */
 export function renderStandardBracketPage(doc, bracket, tournament, customBadge = '') {
   const w = doc.internal.pageSize.getWidth();
@@ -426,11 +623,17 @@ export function renderStandardBracketPage(doc, bracket, tournament, customBadge 
 
   const rounds = bracket.rounds || [];
   const numRounds = rounds.length;
-  const startX = 14;
-  const availableWidth = w - 28;
-  const colWidth = availableWidth / numRounds;
-  const startY = 44;
-  const totalHeight = 138;
+
+  // Panel derecho reservado para Podio Oficial y Mesa de Tatami
+  const podioW = 72;
+  const podioX = w - 10 - podioW; // ~197.4 mm
+
+  // Área para el árbol de combates (llaves)
+  const startX = 10;
+  const availableTreeWidth = podioX - 6 - startX; // ~181.4 mm
+  const colWidth = availableTreeWidth / numRounds;
+  const startY = 38;
+  const totalHeight = 146;
 
   rounds.forEach((round, roundIndex) => {
     const roundX = startX + roundIndex * colWidth;
@@ -449,19 +652,19 @@ export function renderStandardBracketPage(doc, bracket, tournament, customBadge 
     doc.text(round.name.toUpperCase(), roundX + colWidth / 2, startY + 4.5, { align: 'center' });
 
     matches.forEach((match, matchIdx) => {
-      const matchCenterY = startY + 10 + matchIdx * slotSpacing + slotSpacing / 2;
-      const boxW = colWidth - 7;
+      const matchCenterY = startY + 9 + matchIdx * slotSpacing + slotSpacing / 2;
+      const boxW = colWidth - 6;
       const lineY_aka = matchCenterY - 4.5;
       const lineY_ao = matchCenterY + 4.5;
 
       // Línea AKA
       doc.setDrawColor(...COLOR_LINE);
       doc.setLineWidth(0.4);
-      doc.line(roundX + 8, lineY_aka, roundX + boxW - 10, lineY_aka);
+      doc.line(roundX + 8, lineY_aka, roundX + boxW - 8, lineY_aka);
 
       // Marca visual AKA
       doc.setFillColor(...COLOR_AKA);
-      doc.rect(roundX + 4, lineY_aka - 3, 2.5, 3.5, 'F');
+      doc.rect(roundX + 3.5, lineY_aka - 3, 2.5, 3.5, 'F');
 
       // Texto AKA
       doc.setFont('helvetica', roundIndex === 0 && match.aka ? 'bold' : 'normal');
@@ -472,18 +675,19 @@ export function renderStandardBracketPage(doc, bracket, tournament, customBadge 
       if (roundIndex === 0) {
         textAka = match.aka?.fullName || (match.isBye ? 'BYE' : '—');
       }
-      const safeTextAka = textAka.length > 18 ? textAka.slice(0, 17) + '…' : textAka;
-      doc.text(safeTextAka, roundX + 8, lineY_aka - 1);
+      const maxChars = is16 ? 16 : 22;
+      const safeTextAka = textAka.length > maxChars ? textAka.slice(0, maxChars - 1) + '…' : textAka;
+      doc.text(safeTextAka, roundX + 7.5, lineY_aka - 1);
 
       // Casilla de puntos AKA [ ]
-      doc.rect(roundX + boxW - 9, lineY_aka - 4, 7, 5);
+      doc.rect(roundX + boxW - 7.5, lineY_aka - 4, 6.5, 5);
 
       // Línea AO
-      doc.line(roundX + 8, lineY_ao, roundX + boxW - 10, lineY_ao);
+      doc.line(roundX + 8, lineY_ao, roundX + boxW - 8, lineY_ao);
 
       // Marca visual AO
       doc.setFillColor(...COLOR_AO);
-      doc.rect(roundX + 4, lineY_ao - 3, 2.5, 3.5, 'F');
+      doc.rect(roundX + 3.5, lineY_ao - 3, 2.5, 3.5, 'F');
 
       // Texto AO
       doc.setFont('helvetica', roundIndex === 0 && match.ao ? 'bold' : 'normal');
@@ -494,30 +698,30 @@ export function renderStandardBracketPage(doc, bracket, tournament, customBadge 
       if (roundIndex === 0) {
         textAo = match.ao?.fullName || (match.isBye ? 'BYE' : '—');
       }
-      const safeTextAo = textAo.length > 18 ? textAo.slice(0, 17) + '…' : textAo;
-      doc.text(safeTextAo, roundX + 8, lineY_ao - 1);
+      const safeTextAo = textAo.length > maxChars ? textAo.slice(0, maxChars - 1) + '…' : textAo;
+      doc.text(safeTextAo, roundX + 7.5, lineY_ao - 1);
 
       // Casilla de puntos AO [ ]
-      doc.rect(roundX + boxW - 9, lineY_ao - 4, 7, 5);
+      doc.rect(roundX + boxW - 7.5, lineY_ao - 4, 6.5, 5);
 
       // Número de combate pequeño en el centro
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(5.5);
       doc.setTextColor(...COLOR_MUTED);
-      doc.text(`#${match.matchNumber || matchIdx + 1}`, roundX + 1, matchCenterY + 1);
+      doc.text(`#${match.matchNumber || matchIdx + 1}`, roundX + 0.8, matchCenterY + 1);
 
       // --- LÍNEAS DE CONEXIÓN DE BRACKET HACIA LA SIGUIENTE RONDA ---
       if (roundIndex < numRounds - 1) {
         const nextRoundX = startX + (roundIndex + 1) * colWidth;
         const lineStartX = roundX + boxW;
-        const midLineX = lineStartX + (nextRoundX + 4 - lineStartX) / 2;
+        const midLineX = lineStartX + (nextRoundX + 2 - lineStartX) / 2;
         const nextMatchIdx = Math.floor(matchIdx / 2);
         const nextMatchSpacing = totalHeight / (matchCount / 2);
-        const nextCenterY = startY + 10 + nextMatchIdx * nextMatchSpacing + nextMatchSpacing / 2;
+        const nextCenterY = startY + 9 + nextMatchIdx * nextMatchSpacing + nextMatchSpacing / 2;
         const isUpper = matchIdx % 2 === 0;
 
         doc.setDrawColor(...COLOR_DARK);
-        doc.setLineWidth(0.6);
+        doc.setLineWidth(0.5);
 
         // Conector horizontal saliendo de este combate
         doc.line(lineStartX, matchCenterY, midLineX, matchCenterY);
@@ -527,25 +731,34 @@ export function renderStandardBracketPage(doc, bracket, tournament, customBadge 
 
         // Rama horizontal avanzando a la siguiente ronda
         if (isUpper) {
-          doc.line(midLineX, nextCenterY, nextRoundX + 4, nextCenterY);
+          doc.line(midLineX, nextCenterY, nextRoundX + 2, nextCenterY);
         }
       } else {
-        // En la final: Rama hacia la línea de CAMPEÓN
-        const champLineX = roundX + boxW + 4;
-        doc.setDrawColor(...COLOR_DARK);
-        doc.setLineWidth(0.7);
-        doc.line(roundX + boxW, matchCenterY, champLineX + 2, matchCenterY);
+        // En la final: Conector que sube y entra directamente a la caja de Campeón
+        const champEntryY = 62.5;
+        const midChampX = roundX + boxW + (podioX - (roundX + boxW)) / 2;
 
-        // Línea de CAMPEÓN (ORO)
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(7.5);
-        doc.setTextColor(217, 119, 6);
-        doc.text('CAMPEÓN (1º ORO):', champLineX + 3, matchCenterY - 4);
         doc.setDrawColor(217, 119, 6);
-        doc.line(champLineX + 3, matchCenterY + 1, champLineX + 38, matchCenterY + 1);
+        doc.setLineWidth(0.7);
+
+        // Tramo horizontal desde el combate final
+        doc.line(roundX + boxW, matchCenterY, midChampX, matchCenterY);
+
+        // Tramo vertical conectando hacia la altura de Campeón
+        doc.line(midChampX, matchCenterY, midChampX, champEntryY);
+
+        // Entrada a la caja de Campeón
+        doc.line(midChampX, champEntryY, podioX, champEntryY);
+
+        // Flecha de entrada al Campeón
+        doc.setFillColor(217, 119, 6);
+        doc.triangle(podioX - 2.5, champEntryY - 1.5, podioX - 2.5, champEntryY + 1.5, podioX, champEntryY, 'F');
       }
     });
   });
+
+  // Dibujar el panel oficial de Podio y Mesa de Tatami
+  drawOfficialPodiumPanel(doc, podioX, podioW);
 
   drawFooter(doc);
 }
@@ -562,86 +775,116 @@ export function renderMultiPageBracket(doc, multiBracket, tournament) {
     if (page.pageNumber === 1 || page.pageNumber === 2) {
       renderStandardBracketPage(doc, page.bracket, tournament, page.title);
     } else {
-      // Hoja 3: Cruces Finales
+      // Hoja 3: Cruces Finales con Podio Oficial
       const w = doc.internal.pageSize.getWidth();
       drawHeader(doc, tournament, multiBracket.categoryName, multiBracket.tatami, page.title);
       const isFemale = multiBracket.gender === 'F' || (multiBracket.categoryName && multiBracket.categoryName.toUpperCase().includes('FEMENIL'));
       drawKarateSilhouetteWatermark(doc, isFemale);
 
+      // Panel izquierdo para Semifinales y Gran Final (x = 12, w = 150)
+      const leftW = 150;
+      const podioW = 96;
+      const podioX = w - 10 - podioW; // ~173.4 mm
+
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(10);
+      doc.setFontSize(9.5);
       doc.setTextColor(...COLOR_DARK);
-      doc.text('CRUCES DE SEMIFINALES Y FINAL ABSOLUTA', w / 2, 48, { align: 'center' });
+      doc.text('CRUCES DE SEMIFINALES Y GRAN FINAL ABSOLUTA', 12 + leftW / 2, 42, { align: 'center' });
 
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8);
+      doc.setFontSize(7.5);
       doc.setTextColor(...COLOR_MUTED);
-      doc.text(page.note, w / 2, 54, { align: 'center' });
+      doc.text(page.note, 12 + leftW / 2, 47, { align: 'center' });
 
       // Cajas de Semifinales cruzadas con renglones para rellenar a mano
-      const finalsX = w / 2 - 65;
-      const finalsW = 130;
+      const finalsX = 14;
+      const finalsW = leftW - 4;
 
       // SF-1
       doc.setFillColor(255, 255, 255);
       doc.setDrawColor(...COLOR_LINE);
       doc.setLineWidth(0.5);
-      doc.roundedRect(finalsX, 62, finalsW, 26, 2, 2, 'FD');
+      doc.roundedRect(finalsX, 52, finalsW, 28, 2, 2, 'FD');
 
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8);
-      doc.setTextColor(...COLOR_DARK);
-      doc.text('SEMIFINAL 1 (SF-1)', finalsX + 5, 68);
-
+      doc.setFillColor(241, 245, 249);
+      doc.rect(finalsX, 52, finalsW, 6, 'F');
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(7.5);
-      doc.setTextColor(...COLOR_AKA);
-      doc.text('AKA:', finalsX + 5, 75);
       doc.setTextColor(...COLOR_DARK);
-      doc.text('1º Poule A (Hoja 1): ________________________________', finalsX + 15, 75);
-      doc.rect(finalsX + finalsW - 13, 70, 8, 6);
+      doc.text('SEMIFINAL 1 (SF-1)', finalsX + 5, 56.5);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.2);
+      doc.setTextColor(...COLOR_AKA);
+      doc.text('AKA:', finalsX + 5, 64);
+      doc.setTextColor(...COLOR_DARK);
+      doc.text('1º Poule A (Hoja 1): ________________________________________', finalsX + 15, 64);
+      doc.rect(finalsX + finalsW - 13, 60, 8, 5.5);
 
       doc.setTextColor(...COLOR_AO);
-      doc.text('AO:', finalsX + 5, 83);
+      doc.text('AO:', finalsX + 5, 74);
       doc.setTextColor(...COLOR_DARK);
-      doc.text('2º Poule B (Hoja 2): ________________________________', finalsX + 15, 83);
-      doc.rect(finalsX + finalsW - 13, 78, 8, 6);
+      doc.text('2º Poule B (Hoja 2): ________________________________________', finalsX + 15, 74);
+      doc.rect(finalsX + finalsW - 13, 70, 8, 5.5);
 
       // SF-2
-      doc.roundedRect(finalsX, 94, finalsW, 26, 2, 2, 'FD');
+      doc.roundedRect(finalsX, 86, finalsW, 28, 2, 2, 'FD');
+      doc.setFillColor(241, 245, 249);
+      doc.rect(finalsX, 86, finalsW, 6, 'F');
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8);
-      doc.setTextColor(...COLOR_DARK);
-      doc.text('SEMIFINAL 2 (SF-2)', finalsX + 5, 100);
-
-      doc.setTextColor(...COLOR_AKA);
-      doc.text('AKA:', finalsX + 5, 107);
-      doc.setTextColor(...COLOR_DARK);
-      doc.text('1º Poule B (Hoja 2): ________________________________', finalsX + 15, 107);
-      doc.rect(finalsX + finalsW - 13, 102, 8, 6);
-
-      doc.setTextColor(...COLOR_AO);
-      doc.text('AO:', finalsX + 5, 115);
-      doc.setTextColor(...COLOR_DARK);
-      doc.text('2º Poule A (Hoja 1): ________________________________', finalsX + 15, 115);
-      doc.rect(finalsX + finalsW - 13, 110, 8, 6);
-
-      // GRAN FINAL
-      doc.setFillColor(248, 250, 252);
-      doc.setDrawColor(...COLOR_DARK);
-      doc.setLineWidth(0.8);
-      doc.roundedRect(finalsX, 126, finalsW, 28, 2, 2, 'FD');
-
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8.5);
-      doc.setTextColor(217, 119, 6);
-      doc.text('GRAN FINAL — MEDALLA DE ORO', finalsX + finalsW / 2, 133, { align: 'center' });
-
-      doc.setFont('helvetica', 'normal');
       doc.setFontSize(7.5);
       doc.setTextColor(...COLOR_DARK);
-      doc.text('AKA: Ganador SF-1 _____________________', finalsX + 8, 142);
-      doc.text('AO: Ganador SF-2 _____________________', finalsX + 70, 142);
+      doc.text('SEMIFINAL 2 (SF-2)', finalsX + 5, 90.5);
+
+      doc.setTextColor(...COLOR_AKA);
+      doc.text('AKA:', finalsX + 5, 98);
+      doc.setTextColor(...COLOR_DARK);
+      doc.text('1º Poule B (Hoja 2): ________________________________________', finalsX + 15, 98);
+      doc.rect(finalsX + finalsW - 13, 94, 8, 5.5);
+
+      doc.setTextColor(...COLOR_AO);
+      doc.text('AO:', finalsX + 5, 108);
+      doc.setTextColor(...COLOR_DARK);
+      doc.text('2º Poule A (Hoja 1): ________________________________________', finalsX + 15, 108);
+      doc.rect(finalsX + finalsW - 13, 104, 8, 5.5);
+
+      // GRAN FINAL
+      doc.setFillColor(255, 251, 235);
+      doc.setDrawColor(217, 119, 6);
+      doc.setLineWidth(0.8);
+      doc.roundedRect(finalsX, 122, finalsW, 36, 2, 2, 'FD');
+
+      doc.setFillColor(217, 119, 6);
+      doc.roundedRect(finalsX, 122, finalsW, 7, 2, 2, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(255, 255, 255);
+      doc.text('GRAN FINAL — MEDALLA DE ORO', finalsX + finalsW / 2, 127, { align: 'center' });
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.5);
+      doc.setTextColor(...COLOR_AKA);
+      doc.text('AKA:', finalsX + 6, 137);
+      doc.setTextColor(...COLOR_DARK);
+      doc.text('Ganador SF-1: _____________________________________________', finalsX + 17, 137);
+      doc.rect(finalsX + finalsW - 14, 132, 9, 6.5);
+
+      doc.setTextColor(...COLOR_AO);
+      doc.text('AO:', finalsX + 6, 149);
+      doc.setTextColor(...COLOR_DARK);
+      doc.text('Ganador SF-2: _____________________________________________', finalsX + 17, 149);
+      doc.rect(finalsX + finalsW - 14, 144, 9, 6.5);
+
+      // Conector hacia el panel del podio
+      const finalExitY = 139;
+      doc.setDrawColor(217, 119, 6);
+      doc.setLineWidth(0.8);
+      doc.line(finalsX + finalsW, finalExitY, podioX, finalExitY);
+      doc.setFillColor(217, 119, 6);
+      doc.triangle(podioX - 2.5, finalExitY - 1.5, podioX - 2.5, finalExitY + 1.5, podioX, finalExitY, 'F');
+
+      // Panel de Podio Oficial en Hoja 3
+      drawOfficialPodiumPanel(doc, podioX, podioW);
 
       drawFooter(doc);
     }
