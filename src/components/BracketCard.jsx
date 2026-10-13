@@ -87,25 +87,20 @@ export default function BracketCard({ bracket, tournament }) {
   // Renderizador del bloque oficial de Podio y Resultados de Mesa para jueceo manual
   const renderPodiumSection = () => {
     return (
-      <div className="mt-6 border-t border-slate-200 pt-5">
-        <div className="bg-slate-50/90 border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs">
+      <div className="mt-6 border-t border-slate-200 pt-5 relative z-10">
+        <div className="bg-slate-50/95 border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs relative z-10">
           {/* Encabezado del Podio */}
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3 mb-4">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-                <Award className="w-5 h-5 text-amber-600" />
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-2.5 mb-3.5">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+                <Award className="w-4 h-4 text-amber-600" />
               </div>
-              <div>
-                <h4 className="font-bold text-sm text-slate-900 tracking-tight">
-                  Registro Oficial de Resultados y Podio (Mesa de Tatami)
-                </h4>
-                <p className="text-[11px] text-slate-500">
-                  Espacio oficial para jueceo manual, registro de medallas y firmas de tatami
-                </p>
-              </div>
+              <h4 className="font-bold text-sm text-slate-900 tracking-tight">
+                Resultados y Podio
+              </h4>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold bg-white border border-slate-200 px-2.5 py-1 rounded-md text-slate-700 shadow-2xs">
+              <span className="text-[11px] font-semibold bg-white border border-slate-200 px-2.5 py-0.5 rounded-md text-slate-700 shadow-2xs">
                 Tatami {bracket.tatami || 1} • Shito-Kai
               </span>
             </div>
@@ -226,12 +221,15 @@ export default function BracketCard({ bracket, tournament }) {
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden relative">
-      {/* Silueta deportiva oficial según rama (Femenil o Varonil) */}
-      <div className="absolute right-6 bottom-4 pointer-events-none opacity-8 select-none">
+      {/* Silueta deportiva oficial de fondo (marca de agua en la zona superior de llaves, sin tapar el podio) */}
+      <div
+        className="absolute right-8 top-16 pointer-events-none select-none z-0"
+        style={{ opacity: 0.04 }}
+      >
         <img
           src={isFemale ? silhouetteFemale : silhouetteMale}
           alt={isFemale ? "Silueta Femenil" : "Silueta Varonil"}
-          className="w-56 h-56 object-contain"
+          className="w-64 h-64 object-contain"
         />
       </div>
 
@@ -297,7 +295,7 @@ export default function BracketCard({ bracket, tournament }) {
       )}
 
       {/* Contenido de la Gráfica */}
-      <div className="p-5">
+      <div className="p-5 relative z-10">
         {isMultiPage ? (
           activePageIndex === 2 ? (
             // Vista de Hoja 3: Cruces Finales

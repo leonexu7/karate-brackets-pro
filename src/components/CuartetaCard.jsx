@@ -44,12 +44,15 @@ export default function CuartetaCard({ cuarteta, tournament, onMatchWinner }) {
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden relative">
-      {/* Silueta deportiva oficial según la rama (Femenil o Varonil) */}
-      <div className="absolute right-4 bottom-4 pointer-events-none opacity-8 select-none">
+      {/* Silueta deportiva oficial de fondo (sutil como marca de agua, sin estorbar el podio ni los textos) */}
+      <div
+        className="absolute right-8 top-16 pointer-events-none select-none z-0"
+        style={{ opacity: 0.04 }}
+      >
         <img
           src={isFemale ? silhouetteFemale : silhouetteMale}
           alt={isFemale ? "Silueta Femenil" : "Silueta Varonil"}
-          className="w-48 h-48 object-contain"
+          className="w-56 h-56 object-contain"
         />
       </div>
 
@@ -79,7 +82,7 @@ export default function CuartetaCard({ cuarteta, tournament, onMatchWinner }) {
       </div>
 
       {/* Contenedor de Combates con líneas conectoras y Podio */}
-      <div className="p-5 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+      <div className="p-5 grid grid-cols-1 md:grid-cols-12 gap-6 items-center relative z-10">
         {/* SEMIFINALES (COL 1-5) */}
         <div className="md:col-span-5 space-y-4">
           <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">

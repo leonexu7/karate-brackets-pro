@@ -134,26 +134,23 @@ function drawFooter(doc) {
   doc.text('Shito-Kai Karate-Do • Documento Oficial de Competencia • Mesa de Arbitraje', w / 2, y + 10, { align: 'center' });
 }
 
-// Silueta sutil de karateka oficial según género (Femenil o Varonil)
+// Silueta sutil de karateka oficial según género (Femenil o Varonil) como marca de agua tenue
 function drawKarateSilhouetteWatermark(doc, isFemale = false) {
-  const w = doc.internal.pageSize.getWidth();
-  const h = doc.internal.pageSize.getHeight();
-
-  // Círculo zen tenue en el centro de fondo
+  // Círculo zen tenue en el fondo de la zona de llaves
   doc.setDrawColor(241, 245, 249);
-  doc.circle(w / 2, h / 2 + 6, 38, 'S');
+  doc.circle(100, 110, 36, 'S');
 
-  // Silueta oficial según rama (Femenil o Varonil)
+  // Silueta oficial como marca de agua sutil (5% de opacidad para no estorbar textos ni líneas)
   try {
     const silhouetteImg = isFemale ? SILHOUETTE_FEMALE_BASE64 : SILHOUETTE_MALE_BASE64;
-    // Dibujada en la esquina inferior derecha como sello sobrio y nítido
-    doc.addImage(silhouetteImg, 'PNG', w - 46, h - 48, 34, 34, undefined, 'FAST');
+    if (doc.GState && doc.setGState) {
+      doc.saveGraphicsState();
+      doc.setGState(new doc.GState({ opacity: 0.05 }));
+      doc.addImage(silhouetteImg, 'PNG', 80, 90, 40, 40, undefined, 'FAST');
+      doc.restoreGraphicsState();
+    }
   } catch (_) {
-    // Detalle de respaldo si fuera necesario
-    doc.setTextColor(226, 232, 240);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(26);
-    doc.text('空手道', w - 30, h - 18, { align: 'center' });
+    // Modo de respaldo silencioso
   }
 }
 
@@ -447,11 +444,11 @@ function drawOfficialPodiumPanel(doc, x, w) {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(7.5);
   doc.setTextColor(...COLOR_DARK);
-  doc.text('REGISTRO OFICIAL DE TATAMI', x + w / 2, 42.5, { align: 'center' });
+  doc.text('RESULTADOS Y PODIO', x + w / 2, 42.5, { align: 'center' });
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(5.8);
   doc.setTextColor(...COLOR_MUTED);
-  doc.text('Mesa de Jueceo • Resultados de Categoría', x + w / 2, 46, { align: 'center' });
+  doc.text('Mesa de Control • Shito-Kai', x + w / 2, 46, { align: 'center' });
 
   // 2. Caja Destacada del Campeón (1º Lugar - Oro)
   const champBoxY = 49.5;
