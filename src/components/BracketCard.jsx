@@ -96,9 +96,6 @@ export default function BracketCard({ bracket, tournament }) {
                     <div className="text-[10px] font-semibold text-slate-600 mt-1">
                       Shito-Kai Karate-Do
                     </div>
-                    <div className="text-[9px] text-slate-400">
-                      Tatami {stdBracket.tatami || bracket.tatami || 1} • Gráfica Oficial
-                    </div>
                   </div>
                 )}
               </div>
@@ -126,7 +123,7 @@ export default function BracketCard({ bracket, tournament }) {
             </div>
             <div className="flex items-center gap-2">
               <span className="text-[11px] font-semibold bg-white border border-slate-200 px-2.5 py-0.5 rounded-md text-slate-700 shadow-2xs">
-                Tatami {bracket.tatami || 1} • Shito-Kai
+                Shito-Kai Karate-Do
               </span>
             </div>
           </div>
