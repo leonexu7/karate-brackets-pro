@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Trophy, Printer, Users, Check, ChevronRight, FileText } from 'lucide-react';
-import { KarateKickSilhouette } from '../assets/karateSilhouettes';
 import { ShitoKaiLogo } from '../assets/shitoKaiLogo';
+import silhouetteFemale from '../assets/silhouette_female.png';
+import silhouetteMale from '../assets/silhouette_male.png';
 import { generateSingleBracketPDF } from '../utils/pdfGenerator';
 
 export default function BracketCard({ bracket, tournament }) {
@@ -83,11 +84,17 @@ export default function BracketCard({ bracket, tournament }) {
     );
   };
 
+  const isFemale = bracket.gender === 'F' || (bracket.categoryName && bracket.categoryName.toUpperCase().includes('FEMENIL'));
+
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden relative">
-      {/* Silueta decorativa sobria */}
-      <div className="absolute right-6 bottom-4 pointer-events-none opacity-4">
-        <KarateKickSilhouette className="w-56 h-56 text-slate-800" />
+      {/* Silueta deportiva oficial según rama (Femenil o Varonil) */}
+      <div className="absolute right-6 bottom-4 pointer-events-none opacity-8 select-none">
+        <img
+          src={isFemale ? silhouetteFemale : silhouetteMale}
+          alt={isFemale ? "Silueta Femenil" : "Silueta Varonil"}
+          className="w-56 h-56 object-contain"
+        />
       </div>
 
       {/* Cabecera de la Gráfica */}

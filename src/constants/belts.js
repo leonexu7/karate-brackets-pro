@@ -12,40 +12,47 @@
 
 export const KYU_CATEGORIES = [
   {
-    id: 'cat_10_8',
-    name: '10º a 8º Kyu',
-    shortName: '10º-8º Kyu',
-    rank: 1, // Nivel menor
-    description: 'Categoría para principiantes y novatos (10º, 9º y 8º Kyu)',
+    id: 'cat_10',
+    name: '10º Kyu (Principiantes Básicos)',
+    shortName: '10º Kyu',
+    rank: 1, // Nivel menor absoluto
+    description: 'Categoría exclusiva para principiantes absolutos (10º Kyu)',
+  },
+  {
+    id: 'cat_9_8',
+    name: '9º y 8º Kyu (Principiantes)',
+    shortName: '9º-8º Kyu',
+    rank: 2, // Nivel principiante con avance
+    description: 'Categoría para principiantes (9º y 8º Kyu)',
   },
   {
     id: 'cat_7_4',
-    name: '7º a 4º Kyu',
+    name: '7º a 4º Kyu (Intermedios)',
     shortName: '7º-4º Kyu',
-    rank: 2, // Nivel intermedio
+    rank: 3, // Nivel intermedio
     description: 'Categoría para intermedios (7º, 6º, 5º y 4º Kyu)',
   },
   {
     id: 'cat_3_plus',
-    name: '3º Kyu en adelante (Libre)',
+    name: '3º Kyu en adelante (Libre / Avanzados)',
     shortName: '3º Kyu+ Libre',
-    rank: 3, // Nivel máximo / Libre
+    rank: 4, // Nivel máximo / Libre
     description: 'Categoría abierta para avanzados (3º, 2º, 1º Kyu y Cintas Negras)',
   },
 ];
 
 export const KYUS = [
-  { id: '10_kyu', name: '10º Kyu', naturalCategory: 'cat_10_8', rank: 1 },
-  { id: '9_kyu', name: '9º Kyu', naturalCategory: 'cat_10_8', rank: 1 },
-  { id: '8_kyu', name: '8º Kyu', naturalCategory: 'cat_10_8', rank: 1 },
-  { id: '7_kyu', name: '7º Kyu', naturalCategory: 'cat_7_4', rank: 2 },
-  { id: '6_kyu', name: '6º Kyu', naturalCategory: 'cat_7_4', rank: 2 },
-  { id: '5_kyu', name: '5º Kyu', naturalCategory: 'cat_7_4', rank: 2 },
-  { id: '4_kyu', name: '4º Kyu', naturalCategory: 'cat_7_4', rank: 2 },
-  { id: '3_kyu', name: '3º Kyu', naturalCategory: 'cat_3_plus', rank: 3 },
-  { id: '2_kyu', name: '2º Kyu', naturalCategory: 'cat_3_plus', rank: 3 },
-  { id: '1_kyu', name: '1º Kyu', naturalCategory: 'cat_3_plus', rank: 3 },
-  { id: 'cinta_negra', name: 'Cinta Negra (Dan)', naturalCategory: 'cat_3_plus', rank: 3 },
+  { id: '10_kyu', name: '10º Kyu', naturalCategory: 'cat_10', rank: 1 },
+  { id: '9_kyu', name: '9º Kyu', naturalCategory: 'cat_9_8', rank: 2 },
+  { id: '8_kyu', name: '8º Kyu', naturalCategory: 'cat_9_8', rank: 2 },
+  { id: '7_kyu', name: '7º Kyu', naturalCategory: 'cat_7_4', rank: 3 },
+  { id: '6_kyu', name: '6º Kyu', naturalCategory: 'cat_7_4', rank: 3 },
+  { id: '5_kyu', name: '5º Kyu', naturalCategory: 'cat_7_4', rank: 3 },
+  { id: '4_kyu', name: '4º Kyu', naturalCategory: 'cat_7_4', rank: 3 },
+  { id: '3_kyu', name: '3º Kyu', naturalCategory: 'cat_3_plus', rank: 4 },
+  { id: '2_kyu', name: '2º Kyu', naturalCategory: 'cat_3_plus', rank: 4 },
+  { id: '1_kyu', name: '1º Kyu', naturalCategory: 'cat_3_plus', rank: 4 },
+  { id: 'cinta_negra', name: 'Cinta Negra (Dan)', naturalCategory: 'cat_3_plus', rank: 4 },
 ];
 
 export const BELTS = KYUS; // Alias
@@ -73,6 +80,9 @@ export function getKyuInfo(kyuId) {
 }
 
 export function getKyuCategoryInfo(catId) {
+  if (catId === 'cat_10_8') {
+    return KYU_CATEGORIES[0]; // fallback seguro a cat_10
+  }
   return KYU_CATEGORIES.find(c => c.id === catId) || KYU_CATEGORIES[0];
 }
 
@@ -95,8 +105,14 @@ export function canCompeteInCategory(kyuId, targetCategoryId) {
  */
 export function resolveCompetingCategory(kyuId, specifiedCategoryId = null) {
   const kyu = getKyuInfo(kyuId);
-  if (specifiedCategoryId && canCompeteInCategory(kyuId, specifiedCategoryId)) {
-    return specifiedCategoryId;
+  if (specifiedCategoryId) {
+    let targetCat = specifiedCategoryId;
+    if (targetCat === 'cat_10_8') {
+      targetCat = kyu.rank === 1 ? 'cat_10' : 'cat_9_8';
+    }
+    if (canCompeteInCategory(kyuId, targetCat)) {
+      return targetCat;
+    }
   }
   return kyu.naturalCategory;
 }

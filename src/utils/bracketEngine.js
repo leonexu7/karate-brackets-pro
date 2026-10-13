@@ -49,10 +49,11 @@ export function separateDojos(athletes) {
  * Si hay 7 -> Cuarteta 1 (4 niños), Cuarteta 2 (3 niños con 1 bye)
  * Cada cuarteta garantiza 4 medallas (1 Oro, 1 Plata, 2 Bronces).
  */
-export function generateCuartetas(categoryKey, categoryName, athletes, tatamiNumber = 1) {
+export function generateCuartetas(categoryKey, categoryName, athletes, tatamiNumber = 1, gender = null) {
   const separated = separateDojos(athletes);
   const cuartetas = [];
   const chunkSize = 4;
+  const resolvedGender = gender || (categoryName.toUpperCase().includes('FEMENIL') ? 'F' : 'M');
 
   for (let i = 0; i < separated.length; i += chunkSize) {
     const chunk = separated.slice(i, i + chunkSize);
@@ -77,6 +78,7 @@ export function generateCuartetas(categoryKey, categoryName, athletes, tatamiNum
       groupIndex: cuartetaIndex,
       totalGroups: totalCuartetas,
       tatami: tatamiNumber,
+      gender: resolvedGender,
       athletes: slots,
       // Estructura de combates:
       // Combate 1 (Semi 1): slots[0] (Aka) vs slots[1] (Ao)
@@ -138,10 +140,11 @@ const SEEDING_ORDER_16 = [1, 16, 9, 8, 5, 12, 13, 4, 3, 14, 11, 6, 7, 10, 15, 2]
 /**
  * Genera un bracket estándar de 8 o 16 competidores por hoja
  */
-export function generateStandardBracket(categoryKey, categoryName, athletes, tatamiNumber = 1, forceSize = null) {
+export function generateStandardBracket(categoryKey, categoryName, athletes, tatamiNumber = 1, forceSize = null, gender = null) {
   const count = athletes.length;
   const bracketSize = forceSize || (count <= 8 ? 8 : 16);
   const separated = separateDojos(athletes);
+  const resolvedGender = gender || (categoryName.toUpperCase().includes('FEMENIL') ? 'F' : 'M');
 
   // Colocar competidores en las posiciones de siembra
   const slots = new Array(bracketSize).fill(null);
@@ -271,6 +274,7 @@ export function generateStandardBracket(categoryKey, categoryName, athletes, tat
     categoryKey,
     categoryName,
     tatami: tatamiNumber,
+    gender: resolvedGender,
     bracketSize,
     slots,
     rounds,
@@ -282,14 +286,15 @@ export function generateStandardBracket(categoryKey, categoryName, athletes, tat
  * Genera una gráfica multi-hoja conectada para categorías grandes (> 16 competidores)
  * Divide en Poule A (Hoja 1 de 3), Poule B (Hoja 2 de 3) y Finales Cruzadas (Hoja 3 de 3).
  */
-export function generateMultiPageBracket(categoryKey, categoryName, athletes, tatamiNumber = 1) {
+export function generateMultiPageBracket(categoryKey, categoryName, athletes, tatamiNumber = 1, gender = null) {
   const separated = separateDojos(athletes);
   const mid = Math.ceil(separated.length / 2);
   const pouleA_athletes = separated.slice(0, mid);
   const pouleB_athletes = separated.slice(mid);
+  const resolvedGender = gender || (categoryName.toUpperCase().includes('FEMENIL') ? 'F' : 'M');
 
-  const pouleA = generateStandardBracket(`${categoryKey}_pouleA`, `${categoryName} - Poule A`, pouleA_athletes, tatamiNumber, 16);
-  const pouleB = generateStandardBracket(`${categoryKey}_pouleB`, `${categoryName} - Poule B`, pouleB_athletes, tatamiNumber, 16);
+  const pouleA = generateStandardBracket(`${categoryKey}_pouleA`, `${categoryName} - Poule A`, pouleA_athletes, tatamiNumber, 16, resolvedGender);
+  const pouleB = generateStandardBracket(`${categoryKey}_pouleB`, `${categoryName} - Poule B`, pouleB_athletes, tatamiNumber, 16, resolvedGender);
 
   return {
     id: `multipage_${categoryKey}`,
@@ -297,6 +302,7 @@ export function generateMultiPageBracket(categoryKey, categoryName, athletes, ta
     categoryKey,
     categoryName,
     tatami: tatamiNumber,
+    gender: resolvedGender,
     totalAthletes: athletes.length,
     totalPages: 3,
     pages: [
@@ -348,15 +354,15 @@ export function buildTournamentBrackets(categoriesMap, tatamisCount = 3) {
 
     if (category.format === 'cuarteta') {
       // Regla de Cuartetas Infantiles (<= 8-9 años): 1 por hoja, todos con medalla
-      const cuartetas = generateCuartetas(category.key, category.name, athletes, assignedTatami);
+      const cuartetas = generateCuartetas(category.key, category.name, athletes, assignedTatami, category.gender);
       allBrackets.push(...cuartetas);
     } else if (athletes.length > 16) {
       // Categoría multitudinaria: Multi-hoja conectada (ej. 3 hojas para adolescentes)
-      const multi = generateMultiPageBracket(category.key, category.name, athletes, assignedTatami);
+      const multi = generateMultiPageBracket(category.key, category.name, athletes, assignedTatami, category.gender);
       allBrackets.push(multi);
     } else {
       // Gráfica estándar de 8 o 16 competidores por hoja
-      const std = generateStandardBracket(category.key, category.name, athletes, assignedTatami);
+      const std = generateStandardBracket(category.key, category.name, athletes, assignedTatami, null, category.gender);
       allBrackets.push(std);
     }
   });

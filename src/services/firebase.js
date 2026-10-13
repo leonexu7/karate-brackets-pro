@@ -12,6 +12,7 @@ import {
   getDocs,
   query
 } from '@firebase/firestore';
+import { normalizeDojoKey } from '../utils/dojoHelper';
 
 const STORAGE_CONFIG_KEY = 'karate_firebase_cloud_config_v1';
 
@@ -185,10 +186,14 @@ export async function cloudRegisterAthlete(athlete, dojoData) {
     const dojosSnap = await getDocs(dojosCol);
     let dojoId = null;
 
+    const targetDojoKey = normalizeDojoKey(dojoData.name);
     dojosSnap.forEach(d => {
       const data = d.data();
-      if (data.name && data.name.trim().toLowerCase() === dojoData.name.trim().toLowerCase()) {
-        dojoId = d.id;
+      if (data.name) {
+        if (data.name.trim().toLowerCase() === dojoData.name.trim().toLowerCase() ||
+            normalizeDojoKey(data.name) === targetDojoKey) {
+          dojoId = d.id;
+        }
       }
     });
 
@@ -234,15 +239,19 @@ export async function cloudRegisterBatch(athletesList, dojoData) {
   try {
     const batch = writeBatch(db);
 
-    // 1. Verificar o crear dojo
+    // 1. Verificar o crear dojo con normalización inteligente
     const dojosCol = collection(db, 'tournaments', 'main_tournament', 'dojos');
     const dojosSnap = await getDocs(dojosCol);
     let dojoId = null;
 
+    const targetDojoKey = normalizeDojoKey(dojoData.name);
     dojosSnap.forEach(d => {
       const data = d.data();
-      if (data.name && data.name.trim().toLowerCase() === dojoData.name.trim().toLowerCase()) {
-        dojoId = d.id;
+      if (data.name) {
+        if (data.name.trim().toLowerCase() === dojoData.name.trim().toLowerCase() ||
+            normalizeDojoKey(data.name) === targetDojoKey) {
+          dojoId = d.id;
+        }
       }
     });
 
@@ -275,6 +284,36 @@ export async function cloudRegisterBatch(athletesList, dojoData) {
     return { success: true, count: athletesList.length, dojoId };
   } catch (err) {
     console.error('Error registrando lote en Firebase:', err);
+    throw err;
+  }
+}
+
+// --- ACTUALIZAR ATLETA EN LA NUBE (Edición de Profesor o Admin) ---
+export async function cloudUpdateAthlete(athlete) {
+  const db = getDb();
+  if (!db || !athlete?.id) return false;
+
+  try {
+    const athleteRef = doc(db, 'tournaments', 'main_tournament', 'athletes', athlete.id);
+    await setDoc(athleteRef, athlete, { merge: true });
+    return true;
+  } catch (err) {
+    console.error('Error actualizando atleta en Firebase:', err);
+    throw err;
+  }
+}
+
+// --- ELIMINAR ATLETA EN LA NUBE ---
+export async function cloudDeleteAthlete(athleteId) {
+  const db = getDb();
+  if (!db || !athleteId) return false;
+
+  try {
+    const athleteRef = doc(db, 'tournaments', 'main_tournament', 'athletes', athleteId);
+    await deleteDoc(athleteRef);
+    return true;
+  } catch (err) {
+    console.error('Error eliminando atleta en Firebase:', err);
     throw err;
   }
 }

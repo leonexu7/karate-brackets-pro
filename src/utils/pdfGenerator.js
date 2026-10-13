@@ -1,4 +1,5 @@
 import { jsPDF } from 'jspdf';
+import { SILHOUETTE_FEMALE_BASE64, SILHOUETTE_MALE_BASE64 } from '../assets/silhouetteData';
 
 /**
  * Generador de PDF oficial para torneos de Karate Shito-Kai en formato Horizontal (Landscape).
@@ -133,8 +134,8 @@ function drawFooter(doc) {
   doc.text('Shito-Kai Karate-Do • Documento Oficial de Competencia • Mesa de Arbitraje', w / 2, y + 10, { align: 'center' });
 }
 
-// Silueta sutil de karateka como marca de agua discreta (no satura ni tapa textos)
-function drawKarateSilhouetteWatermark(doc) {
+// Silueta sutil de karateka oficial según género (Femenil o Varonil)
+function drawKarateSilhouetteWatermark(doc, isFemale = false) {
   const w = doc.internal.pageSize.getWidth();
   const h = doc.internal.pageSize.getHeight();
 
@@ -142,11 +143,18 @@ function drawKarateSilhouetteWatermark(doc) {
   doc.setDrawColor(241, 245, 249);
   doc.circle(w / 2, h / 2 + 6, 38, 'S');
 
-  // Detalle artístico tenue de silueta en la esquina inferior derecha
-  doc.setTextColor(226, 232, 240);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(28);
-  doc.text('空手道', w - 32, h - 18, { align: 'center' }); // Kanji Karate-Do tenue
+  // Silueta oficial según rama (Femenil o Varonil)
+  try {
+    const silhouetteImg = isFemale ? SILHOUETTE_FEMALE_BASE64 : SILHOUETTE_MALE_BASE64;
+    // Dibujada en la esquina inferior derecha como sello sobrio y nítido
+    doc.addImage(silhouetteImg, 'PNG', w - 46, h - 48, 34, 34, undefined, 'FAST');
+  } catch (_) {
+    // Detalle de respaldo si fuera necesario
+    doc.setTextColor(226, 232, 240);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(26);
+    doc.text('空手道', w - 30, h - 18, { align: 'center' });
+  }
 }
 
 /**
@@ -162,7 +170,8 @@ export function renderCuartetaPage(doc, cuarteta, tournament) {
     : 'Cuarteta Formativa Infantil — 4 Medallas Garantizadas';
 
   drawHeader(doc, tournament, cuarteta.categoryName, cuarteta.tatami, pageBadge);
-  drawKarateSilhouetteWatermark(doc);
+  const isFemale = cuarteta.gender === 'F' || (cuarteta.categoryName && cuarteta.categoryName.toUpperCase().includes('FEMENIL'));
+  drawKarateSilhouetteWatermark(doc, isFemale);
 
   const ath = cuarteta.athletes || [];
 
@@ -412,7 +421,8 @@ export function renderStandardBracketPage(doc, bracket, tournament, customBadge 
   const pageBadge = customBadge || (is16 ? 'Gráfica Oficial de 16 Posiciones' : 'Gráfica Oficial de 8 Posiciones');
 
   drawHeader(doc, tournament, bracket.categoryName, bracket.tatami, pageBadge);
-  drawKarateSilhouetteWatermark(doc);
+  const isFemale = bracket.gender === 'F' || (bracket.categoryName && bracket.categoryName.toUpperCase().includes('FEMENIL'));
+  drawKarateSilhouetteWatermark(doc, isFemale);
 
   const rounds = bracket.rounds || [];
   const numRounds = rounds.length;
@@ -555,7 +565,8 @@ export function renderMultiPageBracket(doc, multiBracket, tournament) {
       // Hoja 3: Cruces Finales
       const w = doc.internal.pageSize.getWidth();
       drawHeader(doc, tournament, multiBracket.categoryName, multiBracket.tatami, page.title);
-      drawKarateSilhouetteWatermark(doc);
+      const isFemale = multiBracket.gender === 'F' || (multiBracket.categoryName && multiBracket.categoryName.toUpperCase().includes('FEMENIL'));
+      drawKarateSilhouetteWatermark(doc, isFemale);
 
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);

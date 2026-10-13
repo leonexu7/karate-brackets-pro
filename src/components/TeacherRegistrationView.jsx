@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   UserPlus,
   Shield,
@@ -10,6 +10,7 @@ import {
   FileSpreadsheet,
   AlertCircle,
   Lock,
+  Unlock,
   MapPin,
   UserCheck,
   TrendingUp,
@@ -19,7 +20,11 @@ import {
   Receipt,
   FileCheck,
   Info,
-  MessageSquare
+  MessageSquare,
+  Edit2,
+  Trash2,
+  X,
+  Check
 } from 'lucide-react';
 import {
   KYUS,
@@ -33,11 +38,16 @@ import { MODALITIES, calculateAge, findAgeDivision, findWeightDivision } from '.
 import { ShitoKaiLogo } from '../assets/shitoKaiLogo';
 import sakuraTreeImg from '../assets/sakura_tree.png';
 import { downloadExcelTemplate, parseExcelFile } from '../utils/excelHandler';
+import { normalizeDojoKey, findMatchingDojo } from '../utils/dojoHelper';
 
 export default function TeacherRegistrationView({
   tournament,
   onRegisterAthlete,
   onRegisterBatchAthletes,
+  onUpdateAthlete,
+  onDeleteAthlete,
+  allAthletes = [],
+  allDojos = [],
   onOpenAdminLogin,
 }) {
   // Cuotas de inscripción configuradas para el torneo (por defecto $300 para 1 y 2 modalidades)
@@ -52,13 +62,30 @@ export default function TeacherRegistrationView({
     phone: '',
   });
 
+  const [isDojoLocked, setIsDojoLocked] = useState(false);
+  const [editingAthlete, setEditingAthlete] = useState(null);
+
+  // Cargar dojo guardado previamente en el navegador del profesor
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('karate_coach_saved_dojo');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed?.name) {
+          setDojoInfo(parsed);
+          setIsDojoLocked(true);
+        }
+      }
+    } catch (_) {}
+  }, []);
+
   // Datos del Atleta individual
   const [athleteForm, setAthleteForm] = useState({
     fullName: '',
     birthDate: '',
     gender: 'M',
     beltId: '10_kyu', // 10º Kyu por defecto
-    competingCategory: 'cat_10_8',
+    competingCategory: 'cat_10',
     weight: '',
     height: '',
     modalities: ['kumite_ind', 'kata_ind'],
@@ -190,11 +217,16 @@ export default function TeacherRegistrationView({
       birthDate: '',
       gender: athleteForm.gender,
       beltId: '10_kyu',
-      competingCategory: 'cat_10_8',
+      competingCategory: 'cat_10',
       weight: '',
       height: '',
       modalities: ['kumite_ind', 'kata_ind'],
     });
+
+    try {
+      localStorage.setItem('karate_coach_saved_dojo', JSON.stringify(dojoInfo));
+      setIsDojoLocked(true);
+    } catch (_) {}
 
     setSuccessNotice(`¡Competidor ${newAthlete.fullName} (${kyu.name}) inscrito exitosamente en ${catInfo.name}!`);
     setTimeout(() => setSuccessNotice(''), 4500);
@@ -284,7 +316,8 @@ export default function TeacherRegistrationView({
         let specifiedCat = parts[6]?.trim();
         let finalCat = kyu.naturalCategory;
         if (specifiedCat) {
-          if (specifiedCat.includes('10') || specifiedCat.includes('8')) specifiedCat = 'cat_10_8';
+          if (specifiedCat.includes('10')) specifiedCat = 'cat_10';
+          else if (specifiedCat.includes('9') || specifiedCat.includes('8')) specifiedCat = 'cat_9_8';
           else if (specifiedCat.includes('7') || specifiedCat.includes('4')) specifiedCat = 'cat_7_4';
           else if (specifiedCat.includes('3') || specifiedCat.toLowerCase().includes('libre')) specifiedCat = 'cat_3_plus';
           finalCat = resolveCompetingCategory(kyu.id, specifiedCat);
@@ -335,9 +368,108 @@ export default function TeacherRegistrationView({
 
   const currentKyu = getKyuInfo(athleteForm.beltId);
 
+  // Atletas totales pertenecientes al profesor (sesión actual + ya registrados en el dojo)
+  const combinedAthletes = useMemo(() => {
+    const localIds = new Set(myRegisteredAthletes.map(a => a.id));
+    const list = [...myRegisteredAthletes];
+
+    if (dojoInfo.name?.trim() && Array.isArray(allAthletes)) {
+      const targetDojo = findMatchingDojo(allDojos, dojoInfo.name);
+      const targetKey = normalizeDojoKey(dojoInfo.name);
+
+      allAthletes.forEach(a => {
+        if (!a || !a.id || localIds.has(a.id)) return;
+        const matchesDojoId = targetDojo && a.dojoId === targetDojo.id;
+        const matchesDojoName = a.dojoName && normalizeDojoKey(a.dojoName) === targetKey;
+        if (matchesDojoId || matchesDojoName) {
+          list.push(a);
+          localIds.add(a.id);
+        }
+      });
+    }
+
+    return list;
+  }, [myRegisteredAthletes, allAthletes, allDojos, dojoInfo.name]);
+
+  // Manejador de cambio de nombre de Dojo con auto-completado
+  const handleDojoNameChange = (val) => {
+    setDojoInfo(prev => {
+      const updated = { ...prev, name: val };
+      const matched = findMatchingDojo(allDojos, val);
+      if (matched) {
+        if (matched.sensei && !prev.sensei) updated.sensei = matched.sensei;
+        if (matched.city && !prev.city) updated.city = matched.city;
+        if (matched.phone && !prev.phone) updated.phone = matched.phone;
+      }
+      return updated;
+    });
+  };
+
+  // Fijar / Desfijar Dojo para evitar errores al escribir
+  const handleToggleDojoLock = () => {
+    if (!isDojoLocked) {
+      if (!dojoInfo.name.trim()) {
+        alert('Ingresa el nombre del Dojo para fijarlo.');
+        return;
+      }
+      setIsDojoLocked(true);
+      try {
+        localStorage.setItem('karate_coach_saved_dojo', JSON.stringify(dojoInfo));
+      } catch (_) {}
+    } else {
+      setIsDojoLocked(false);
+    }
+  };
+
+  // Guardar edición de un competidor
+  const handleSaveEditedAthlete = (e) => {
+    e.preventDefault();
+    if (!editingAthlete.fullName?.trim() || !editingAthlete.birthDate) {
+      alert('El nombre y la fecha de nacimiento son obligatorios.');
+      return;
+    }
+
+    const kyu = getKyuInfo(editingAthlete.beltId);
+    const finalCompCategory = resolveCompetingCategory(editingAthlete.beltId, editingAthlete.competingCategory);
+    const catInfo = getKyuCategoryInfo(finalCompCategory);
+
+    const updated = {
+      ...editingAthlete,
+      fullName: editingAthlete.fullName.trim(),
+      beltId: kyu.id,
+      kyuName: kyu.name,
+      competingCategory: finalCompCategory,
+      competingCategoryName: catInfo.name,
+    };
+
+    if (onUpdateAthlete) {
+      onUpdateAthlete(updated);
+    }
+
+    setMyRegisteredAthletes(prev => {
+      const exists = prev.some(a => a.id === updated.id);
+      return exists ? prev.map(a => a.id === updated.id ? updated : a) : [updated, ...prev];
+    });
+    setEditingAthlete(null);
+    setSuccessNotice(`¡Competidor ${updated.fullName} actualizado exitosamente!`);
+    setTimeout(() => setSuccessNotice(''), 4500);
+  };
+
+  // Eliminar competidor desde la vista del profesor
+  const handleDeleteCoachAthlete = (athlete) => {
+    if (window.confirm(`¿Deseas eliminar a ${athlete.fullName} del registro de tu escuela?`)) {
+      if (onDeleteAthlete) {
+        onDeleteAthlete(athlete.id);
+      }
+      setMyRegisteredAthletes(prev => prev.filter(a => a.id !== athlete.id));
+      setSuccessNotice(`Competidor eliminado del registro.`);
+      setTimeout(() => setSuccessNotice(''), 3000);
+    }
+  };
+
   // Cálculo financiero de cuotas de inscripción para este profesor
-  const singleModalityAthletes = myRegisteredAthletes.filter(a => (a.modalities || []).length === 1);
-  const doubleModalityAthletes = myRegisteredAthletes.filter(a => (a.modalities || []).length >= 2);
+  const singleModalityAthletes = combinedAthletes.filter(a => (a.modalities || []).length === 1);
+  const doubleModalityAthletes = combinedAthletes.filter(a => (a.modalities || []).length >= 2);
   const totalSingleFee = singleModalityAthletes.length * feeSingle;
   const totalDoubleFee = doubleModalityAthletes.length * feeDouble;
   const totalGrandPayment = totalSingleFee + totalDoubleFee;
@@ -350,7 +482,7 @@ export default function TeacherRegistrationView({
       `• *Ciudad:* ${dojoInfo.city || 'S/D'}\n` +
       `• *Teléfono:* ${dojoInfo.phone || 'S/D'}\n\n` +
       `📊 *Resumen de Competidores:*\n` +
-      `• Total de Alumnos: *${myRegisteredAthletes.length} atletas*\n` +
+      `• Total de Alumnos: *${combinedAthletes.length} atletas*\n` +
       `• 1 Modalidad: ${singleModalityAthletes.length} atleta(s) ($${totalSingleFee} MXN)\n` +
       `• 2 Modalidades: ${doubleModalityAthletes.length} atleta(s) ($${totalDoubleFee} MXN)\n\n` +
       `💰 *MONTO TOTAL A LIQUIDAR:* *$${totalGrandPayment.toLocaleString('es-MX')} MXN*\n\n` +
@@ -446,34 +578,84 @@ export default function TeacherRegistrationView({
 
         {/* SECCIÓN 1: DATOS OFICIALES DEL DOJO / ESCUELA */}
         <div className="bg-white/95 backdrop-blur-xs rounded-2xl border border-slate-200 shadow-xs p-5 sm:p-6 space-y-4">
-          <div className="flex items-center gap-2.5 border-b border-slate-100 pb-2">
-            <div className="w-7 h-7 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 font-bold text-xs flex items-center justify-center font-serif">
-              館
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 font-bold text-xs flex items-center justify-center font-serif">
+                館
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-slate-900">1. Datos Oficiales de tu Dojo / Escuela</h2>
+                <p className="text-[11px] text-slate-500">
+                  Selecciona de la lista o escribe tu dojo. Quedará fijado automáticamente para todos tus atletas.
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-sm font-bold text-slate-900">1. Datos Oficiales de tu Dojo / Escuela</h2>
-              <p className="text-[11px] text-slate-500">
-                Ingresa el nombre oficial completo sin abreviaciones para la correcta separación en tatami.
-              </p>
-            </div>
+
+            {/* BOTÓN FIJAR / CAMBIAR DOJO */}
+            {dojoInfo.name && (
+              <button
+                type="button"
+                onClick={handleToggleDojoLock}
+                className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer border ${
+                  isDojoLocked
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
+                    : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
+                }`}
+                title={isDojoLocked ? "Haz clic para desbloquear y cambiar de dojo" : "Fija tu dojo para que no cambie entre inscripciones"}
+              >
+                {isDojoLocked ? (
+                  <>
+                    <Lock className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Dojo Fijado ✓ (Cambiar)</span>
+                  </>
+                ) : (
+                  <>
+                    <Unlock className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Fijar Dojo para esta sesión</span>
+                  </>
+                )}
+              </button>
+            )}
           </div>
+
+          {/* Datalist con sugerencias de dojos ya registrados */}
+          <datalist id="dojosRegisteredList">
+            {allDojos.map((d, i) => (
+              <option key={d.id || i} value={d.name}>
+                Sensei: {d.sensei || 'Oficial'} {d.city ? `(${d.city})` : ''}
+              </option>
+            ))}
+          </datalist>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div className="sm:col-span-2">
               <label className="block font-semibold text-slate-800 mb-1">
-                Nombre Oficial Completo del Dojo / Escuela / Asociación *
+                Nombre Oficial del Dojo / Escuela / Asociación *
               </label>
               <input
                 type="text"
                 required
-                placeholder="Ej. Escuela Shito-Ryu Kai Honbu México (Escribe el nombre completo)"
+                list="dojosRegisteredList"
+                placeholder="Ej. OB-KAI Tlacotepec / Shito-Ryu Honbu (Escribe o selecciona de la lista)"
                 value={dojoInfo.name}
-                onChange={(e) => setDojoInfo({ ...dojoInfo, name: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-hidden focus:ring-2 focus:ring-rose-500 bg-white"
+                disabled={isDojoLocked}
+                onChange={(e) => handleDojoNameChange(e.target.value)}
+                className={`w-full px-3 py-2 border rounded-lg outline-hidden focus:ring-2 focus:ring-rose-500 ${
+                  isDojoLocked
+                    ? 'bg-slate-100/80 border-emerald-300 font-semibold text-slate-900 cursor-not-allowed'
+                    : 'bg-white border-slate-300'
+                }`}
               />
-              <span className="text-[10px] text-slate-500 mt-0.5 block">
-                Este nombre exacto es usado por el sorteo para evitar que dos compañeros del mismo dojo choquen en primera ronda.
-              </span>
+              <div className="flex flex-wrap items-center justify-between gap-1 text-[10px] text-slate-500 mt-1">
+                <span>
+                  💡 Si ya existe en el torneo, selecciónalo de la lista para autocompletar tus datos y evitar discrepancias.
+                </span>
+                {dojoInfo.name && (
+                  <span className="text-emerald-700 font-semibold">
+                    Clave normalizada: <code className="bg-emerald-50 px-1 rounded">{normalizeDojoKey(dojoInfo.name)}</code>
+                  </span>
+                )}
+              </div>
             </div>
 
             <div>
@@ -483,8 +665,11 @@ export default function TeacherRegistrationView({
                 required
                 placeholder="Ej. Sensei Roberto Tanaka"
                 value={dojoInfo.sensei}
+                disabled={isDojoLocked}
                 onChange={(e) => setDojoInfo({ ...dojoInfo, sensei: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-hidden focus:ring-2 focus:ring-rose-500 bg-white"
+                className={`w-full px-3 py-2 border rounded-lg outline-hidden focus:ring-2 focus:ring-rose-500 ${
+                  isDojoLocked ? 'bg-slate-100/80 border-slate-200 text-slate-800' : 'bg-white border-slate-300'
+                }`}
               />
             </div>
 
@@ -495,8 +680,11 @@ export default function TeacherRegistrationView({
                   type="text"
                   placeholder="Ej. Puebla, Pue."
                   value={dojoInfo.city}
+                  disabled={isDojoLocked}
                   onChange={(e) => setDojoInfo({ ...dojoInfo, city: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-hidden focus:ring-2 focus:ring-rose-500 bg-white"
+                  className={`w-full px-3 py-2 border rounded-lg outline-hidden focus:ring-2 focus:ring-rose-500 ${
+                    isDojoLocked ? 'bg-slate-100/80 border-slate-200 text-slate-800' : 'bg-white border-slate-300'
+                  }`}
                 />
               </div>
               <div>
@@ -505,8 +693,11 @@ export default function TeacherRegistrationView({
                   type="text"
                   placeholder="22 1234 5678"
                   value={dojoInfo.phone}
+                  disabled={isDojoLocked}
                   onChange={(e) => setDojoInfo({ ...dojoInfo, phone: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-hidden focus:ring-2 focus:ring-rose-500 bg-white"
+                  className={`w-full px-3 py-2 border rounded-lg outline-hidden focus:ring-2 focus:ring-rose-500 ${
+                    isDojoLocked ? 'bg-slate-100/80 border-slate-200 text-slate-800' : 'bg-white border-slate-300'
+                  }`}
                 />
               </div>
             </div>
@@ -645,7 +836,7 @@ export default function TeacherRegistrationView({
                       >
                         <div className="text-xs font-bold">{kyu.name}</div>
                         <div className={`text-[10px] mt-0.5 ${isSelected ? 'text-slate-300' : 'text-slate-500'}`}>
-                          {kyu.rank === 1 ? '10º-8º' : kyu.rank === 2 ? '7º-4º' : '3º+'}
+                          {kyu.rank === 1 ? '10º Kyu' : kyu.rank === 2 ? '9º-8º Kyu' : kyu.rank === 3 ? '7º-4º Kyu' : '3º+ Libre'}
                         </div>
                       </button>
                     );
@@ -667,7 +858,7 @@ export default function TeacherRegistrationView({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
                   {KYU_CATEGORIES.map(cat => {
                     const isAllowed = canCompeteInCategory(athleteForm.beltId, cat.id);
                     const isSelected = athleteForm.competingCategory === cat.id;
@@ -1060,60 +1251,357 @@ export default function TeacherRegistrationView({
           )}
         </div>
 
-        {/* SECCIÓN 4: MIS ATLETAS REGISTRADOS EN ESTA SESIÓN */}
-        <div className="bg-white/95 backdrop-blur-xs rounded-2xl border border-slate-200 shadow-xs p-5 sm:p-6 space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
+        {/* SECCIÓN 4: PADRÓN DE ALUMNOS REGISTRADOS Y GESTIÓN CON BOTÓN DE EDITAR */}
+        <div className="bg-white/95 backdrop-blur-xs rounded-2xl border border-slate-200 shadow-xs p-5 sm:p-6 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
             <div className="flex items-center gap-2">
               <UserCheck className="w-5 h-5 text-emerald-600" />
-              <h3 className="text-sm font-bold text-slate-900">
-                Alumnos Registrados por tu Escuela ({myRegisteredAthletes.length})
-              </h3>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">
+                  4. Alumnos Registrados por tu Escuela ({combinedAthletes.length} Competidores)
+                </h3>
+                <p className="text-[11px] text-slate-500">
+                  Revisa los datos de tus competidores. Si detectas algún error de nombre, cinta, peso o categoría, pulsa <strong>"Editar Competidor"</strong> para corregirlo.
+                </p>
+              </div>
             </div>
-            <span className="text-[11px] text-slate-500 font-medium">
-              {dojoInfo.name || 'Sin dojo especificado aún'}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] bg-slate-100 text-slate-700 font-semibold px-2.5 py-1 rounded-lg border border-slate-200">
+                🥋 Dojo: {dojoInfo.name || 'Sin especificar'}
+              </span>
+            </div>
           </div>
 
-          {myRegisteredAthletes.length === 0 ? (
-            <div className="py-8 text-center text-slate-400 text-xs">
-              Aún no has registrado competidores. Completa el formulario individual o sube tu plantilla de Excel arriba.
+          {combinedAthletes.length === 0 ? (
+            <div className="py-10 text-center space-y-2">
+              <div className="w-12 h-12 mx-auto rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                <UserPlus className="w-6 h-6" />
+              </div>
+              <p className="text-slate-600 font-medium text-xs">
+                Aún no tienes competidores registrados para esta escuela.
+              </p>
+              <p className="text-slate-400 text-[11px]">
+                Usa el formulario individual en la Sección 2 o sube tu archivo Excel para comenzar.
+              </p>
             </div>
           ) : (
-            <div className="divide-y divide-slate-100 max-h-72 overflow-y-auto">
-              {myRegisteredAthletes.map((ath, i) => {
-                const modCount = (ath.modalities || []).length;
-                const athleteFee = modCount >= 2 ? feeDouble : feeSingle;
+            <div className="space-y-3">
+              <div className="divide-y divide-slate-100 max-h-96 overflow-y-auto pr-1">
+                {combinedAthletes.map((ath, i) => {
+                  const modCount = (ath.modalities || []).length;
+                  const athleteFee = modCount >= 2 ? feeDouble : feeSingle;
+                  const athleteAge = calculateAge(ath.birthDate, tournament.date);
 
-                return (
-                  <div key={ath.id || i} className="py-2.5 flex items-center justify-between text-xs gap-3">
-                    <div>
-                      <div className="font-semibold text-slate-900">{ath.fullName}</div>
-                      <div className="text-[11px] text-slate-500 flex flex-wrap items-center gap-2 mt-0.5">
-                        <span>{ath.gender === 'F' ? 'Femenil' : 'Varonil'}</span>
-                        <span>• Nac: {ath.birthDate}</span>
-                        <span className="font-bold text-slate-700">• {ath.kyuName || ath.beltId}</span>
-                        {ath.competingCategoryName && (
-                          <span className="text-slate-600 font-medium">• {ath.competingCategoryName}</span>
-                        )}
-                        <span>• {modCount >= 2 ? 'Ambas modalidades (Kata + Kumite)' : ath.modalities?.[0]?.replace('_ind', '')}</span>
-                        {ath.weight && <span>• {ath.weight} kg</span>}
+                  return (
+                    <div
+                      key={ath.id || i}
+                      className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/80 p-2 rounded-xl transition-colors"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-700 text-[11px] font-bold flex items-center justify-center shrink-0">
+                            {i + 1}
+                          </span>
+                          <span className="font-bold text-slate-900 text-sm">{ath.fullName}</span>
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                              ath.gender === 'F' ? 'bg-rose-100 text-rose-700' : 'bg-blue-100 text-blue-700'
+                            }`}
+                          >
+                            {ath.gender === 'F' ? 'Femenil' : 'Varonil'}
+                          </span>
+                        </div>
+
+                        <div className="text-[11px] text-slate-600 flex flex-wrap items-center gap-x-3 gap-y-1 pl-7">
+                          <span>
+                            🎂 Nac: <strong>{ath.birthDate}</strong> ({athleteAge !== null ? `${athleteAge} años` : 'S/E'})
+                          </span>
+                          <span>
+                            🥋 Grado: <strong className="text-slate-800">{ath.kyuName || ath.beltId}</strong>
+                          </span>
+                          <span>
+                            🏆 Categoría:{' '}
+                            <strong className="text-rose-700">
+                              {getKyuCategoryInfo(ath.competingCategory).name}
+                            </strong>
+                          </span>
+                          <span>
+                            ⚔️ Modalidades:{' '}
+                            <strong className="text-slate-700">
+                              {modCount >= 2 ? 'Kata y Kumite (Ambas)' : ath.modalities?.[0]?.includes('kata') ? 'Kata' : 'Kumite'}
+                            </strong>
+                          </span>
+                          {ath.weight && (
+                            <span>
+                              ⚖️ Peso: <strong>{ath.weight} kg</strong>
+                            </span>
+                          )}
+                          {ath.height && (
+                            <span>
+                              📏 Estatura: <strong>{ath.height} cm</strong>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* ACCIONES DEL PROFESOR: EDITAR Y ELIMINAR */}
+                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-center pl-7 sm:pl-0">
+                        <span className="text-slate-700 font-mono font-bold text-xs bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
+                          ${athleteFee} MXN
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() => setEditingAthlete({ ...ath })}
+                          className="px-3 py-1.5 bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-300 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                          title="Editar los datos de este competidor"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                          <span>Editar Competidor</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteCoachAthlete(ath)}
+                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                          title="Eliminar competidor de la escuela"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
-
-                    <div className="flex items-center gap-2.5 shrink-0">
-                      <span className="text-slate-700 font-mono font-bold text-xs bg-slate-100 px-2 py-0.5 rounded">
-                        ${athleteFee} MXN
-                      </span>
-                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
-                        Inscrito ✓
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
+
+        {/* MODAL DE EDICIÓN DE COMPETIDOR PARA EL ENTRENADOR */}
+        {editingAthlete && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-xl w-full max-h-[92vh] overflow-y-auto p-5 sm:p-6 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-sky-50 text-sky-600 border border-sky-200 flex items-center justify-center">
+                    <Edit2 className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-sm">Editar Datos del Competidor</h3>
+                    <p className="text-[11px] text-slate-500">
+                      Corrige cualquier dato del alumno sin perder su registro en el torneo.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setEditingAthlete(null)}
+                  className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveEditedAthlete} className="space-y-4 text-xs">
+                {/* Nombre Completo */}
+                <div>
+                  <label className="block font-semibold text-slate-800 mb-1">Nombre Completo *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editingAthlete.fullName}
+                    onChange={(e) => setEditingAthlete({ ...editingAthlete, fullName: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-hidden focus:ring-2 focus:ring-rose-500 bg-white"
+                  />
+                </div>
+
+                {/* Fecha de Nacimiento y Rama */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-semibold text-slate-800 mb-1">Fecha de Nacimiento *</label>
+                    <input
+                      type="date"
+                      required
+                      value={editingAthlete.birthDate}
+                      onChange={(e) => setEditingAthlete({ ...editingAthlete, birthDate: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-hidden focus:ring-2 focus:ring-rose-500 bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-slate-800 mb-1">Rama / Sexo *</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setEditingAthlete({ ...editingAthlete, gender: 'M' })}
+                        className={`py-2 text-center rounded-lg border font-semibold cursor-pointer ${
+                          editingAthlete.gender === 'M'
+                            ? 'bg-blue-600 text-white border-blue-700'
+                            : 'bg-white text-slate-700 border-slate-300'
+                        }`}
+                      >
+                        Varonil (M)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditingAthlete({ ...editingAthlete, gender: 'F' })}
+                        className={`py-2 text-center rounded-lg border font-semibold cursor-pointer ${
+                          editingAthlete.gender === 'F'
+                            ? 'bg-rose-500 text-white border-rose-600'
+                            : 'bg-white text-slate-700 border-slate-300'
+                        }`}
+                      >
+                        Femenil (F)
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Grado Kyu */}
+                <div>
+                  <label className="block font-semibold text-slate-800 mb-1">Grado Técnico (KYU) *</label>
+                  <select
+                    value={editingAthlete.beltId}
+                    onChange={(e) => {
+                      const newKyuId = e.target.value;
+                      const k = getKyuInfo(newKyuId);
+                      const isStillAllowed = canCompeteInCategory(newKyuId, editingAthlete.competingCategory);
+                      setEditingAthlete({
+                        ...editingAthlete,
+                        beltId: newKyuId,
+                        competingCategory: isStillAllowed ? editingAthlete.competingCategory : k.naturalCategory,
+                      });
+                    }}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-hidden focus:ring-2 focus:ring-rose-500 bg-white"
+                  >
+                    {KYUS.map(k => (
+                      <option key={k.id} value={k.id}>
+                        {k.name} ({k.rank === 1 ? '10º Kyu' : k.rank === 2 ? '9º-8º Kyu' : k.rank === 3 ? '7º-4º Kyu' : '3º+ Libre'})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Categoría de Competencia */}
+                <div>
+                  <label className="block font-semibold text-slate-800 mb-1">Categoría de Competencia *</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {KYU_CATEGORIES.map(cat => {
+                      const isAllowed = canCompeteInCategory(editingAthlete.beltId, cat.id);
+                      const isSelected = editingAthlete.competingCategory === cat.id;
+
+                      return (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          disabled={!isAllowed}
+                          onClick={() => setEditingAthlete({ ...editingAthlete, competingCategory: cat.id })}
+                          className={`p-2.5 rounded-xl border text-left transition-all ${
+                            !isAllowed
+                              ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-60'
+                              : isSelected
+                              ? 'bg-white border-rose-500 ring-2 ring-rose-400 font-bold text-slate-900 cursor-pointer'
+                              : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50 cursor-pointer'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span>{cat.name}</span>
+                            {isSelected && <Check className="w-3.5 h-3.5 text-rose-600" />}
+                          </div>
+                          {!isAllowed && (
+                            <span className="text-[10px] text-red-500 block">⛔ Grado menor al alumno</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Peso y Estatura */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-semibold text-slate-800 mb-1">Peso (kg)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      placeholder="Ej. 25.5"
+                      value={editingAthlete.weight || ''}
+                      onChange={(e) => setEditingAthlete({ ...editingAthlete, weight: e.target.value !== '' ? parseFloat(e.target.value) : null })}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-hidden focus:ring-2 focus:ring-rose-500 bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-slate-800 mb-1">Estatura (cm)</label>
+                    <input
+                      type="number"
+                      step="1"
+                      placeholder="Ej. 130"
+                      value={editingAthlete.height || ''}
+                      onChange={(e) => setEditingAthlete({ ...editingAthlete, height: e.target.value !== '' ? parseFloat(e.target.value) : null })}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-hidden focus:ring-2 focus:ring-rose-500 bg-white"
+                    />
+                  </div>
+                </div>
+
+                {/* Modalidades */}
+                <div>
+                  <label className="block font-semibold text-slate-800 mb-1">Modalidades Inscritas *</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {MODALITIES.filter(m => !m.id.includes('team')).map(m => {
+                      const isChecked = (editingAthlete.modalities || []).includes(m.id);
+                      return (
+                        <label
+                          key={m.id}
+                          className={`p-2.5 border rounded-xl flex items-center gap-2 cursor-pointer transition-colors ${
+                            isChecked ? 'bg-rose-50/70 border-rose-300 text-slate-900 font-semibold' : 'bg-white border-slate-200 text-slate-600'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => {
+                              const currentMods = editingAthlete.modalities || [];
+                              const updatedMods = isChecked
+                                ? currentMods.filter(x => x !== m.id)
+                                : [...currentMods, m.id];
+                              if (updatedMods.length === 0) {
+                                alert('El competidor debe estar inscrito en al menos 1 modalidad.');
+                                return;
+                              }
+                              setEditingAthlete({ ...editingAthlete, modalities: updatedMods });
+                            }}
+                            className="rounded text-rose-600 focus:ring-rose-500"
+                          />
+                          <span>{m.name}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Botones de acción del Modal */}
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setEditingAthlete(null)}
+                    className="px-4 py-2 border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold rounded-xl cursor-pointer transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 bg-slate-900 hover:bg-black text-white font-bold rounded-xl shadow-xs flex items-center gap-2 cursor-pointer transition-colors"
+                  >
+                    <Check className="w-4 h-4 text-emerald-400" />
+                    <span>Guardar Cambios</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -16,9 +16,12 @@ import {
   subscribeToCloudTournament,
   cloudRegisterAthlete,
   cloudRegisterBatch,
+  cloudUpdateAthlete,
+  cloudDeleteAthlete,
   cloudSaveTournamentSettings,
   cloudResetToZero
 } from './services/firebase';
+import { findMatchingDojo } from './utils/dojoHelper';
 import {
   loadTournamentState,
   saveTournamentState,
@@ -186,9 +189,7 @@ export default function App() {
     }
 
     setState(prev => {
-      const existingDojo = prev.dojos.find(
-        d => d.name.trim().toLowerCase() === dojoData.name.trim().toLowerCase()
-      );
+      const existingDojo = findMatchingDojo(prev.dojos, dojoData.name);
 
       let dojoId = existingDojo ? existingDojo.id : null;
       let updatedDojos = [...prev.dojos];
@@ -233,9 +234,7 @@ export default function App() {
     }
 
     setState(prev => {
-      const existingDojo = prev.dojos.find(
-        d => d.name.trim().toLowerCase() === dojoData.name.trim().toLowerCase()
-      );
+      const existingDojo = findMatchingDojo(prev.dojos, dojoData.name);
 
       let dojoId = existingDojo ? existingDojo.id : null;
       let updatedDojos = [...prev.dojos];
@@ -262,6 +261,35 @@ export default function App() {
         athletes: [...mappedAthletes, ...prev.athletes],
       };
     });
+  };
+
+  // --- Handlers de Edición y Gestión del Profesor ---
+  const handleTeacherUpdateAthlete = async (updatedAthlete) => {
+    if (isCloudActive) {
+      try {
+        await cloudUpdateAthlete(updatedAthlete);
+      } catch (err) {
+        console.warn('Error actualizando atleta en Firebase:', err);
+      }
+    }
+    setState(prev => ({
+      ...prev,
+      athletes: prev.athletes.map(a => a.id === updatedAthlete.id ? updatedAthlete : a),
+    }));
+  };
+
+  const handleTeacherDeleteAthlete = async (athleteId) => {
+    if (isCloudActive) {
+      try {
+        await cloudDeleteAthlete(athleteId);
+      } catch (err) {
+        console.warn('Error eliminando atleta en Firebase:', err);
+      }
+    }
+    setState(prev => ({
+      ...prev,
+      athletes: prev.athletes.filter(a => a.id !== athleteId),
+    }));
   };
 
   // --- Handlers de Administración de Atletas ---
@@ -437,6 +465,10 @@ export default function App() {
             tournament={state.tournament}
             onRegisterAthlete={handleTeacherRegisterAthlete}
             onRegisterBatchAthletes={handleTeacherRegisterBatch}
+            onUpdateAthlete={handleTeacherUpdateAthlete}
+            onDeleteAthlete={handleTeacherDeleteAthlete}
+            allAthletes={state.athletes}
+            allDojos={state.dojos}
             onOpenAdminLogin={() => setIsAdminLoginOpen(true)}
           />
         ) : (

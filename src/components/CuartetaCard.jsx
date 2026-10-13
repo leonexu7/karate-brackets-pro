@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { Trophy, Printer, Award, Check } from 'lucide-react';
-import { KarateKataSilhouette } from '../assets/karateSilhouettes';
 import { ShitoKaiLogo } from '../assets/shitoKaiLogo';
+import silhouetteFemale from '../assets/silhouette_female.png';
+import silhouetteMale from '../assets/silhouette_male.png';
 import { generateSingleBracketPDF } from '../utils/pdfGenerator';
 
 export default function CuartetaCard({ cuarteta, tournament, onMatchWinner }) {
   const [matches, setMatches] = useState(cuarteta.matches);
   const [medals, setMedals] = useState(cuarteta.medals);
 
+  const isFemale = cuarteta.gender === 'F' || (cuarteta.categoryName && cuarteta.categoryName.toUpperCase().includes('FEMENIL'));
   const ath = cuarteta.athletes || [];
 
   const handleSelectWinner = (matchIndex, winnerAthlete, loserAthlete) => {
@@ -42,9 +44,13 @@ export default function CuartetaCard({ cuarteta, tournament, onMatchWinner }) {
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden relative">
-      {/* Silueta de fondo tenue */}
-      <div className="absolute right-4 bottom-4 pointer-events-none opacity-4">
-        <KarateKataSilhouette className="w-48 h-48 text-slate-800" />
+      {/* Silueta deportiva oficial según la rama (Femenil o Varonil) */}
+      <div className="absolute right-4 bottom-4 pointer-events-none opacity-8 select-none">
+        <img
+          src={isFemale ? silhouetteFemale : silhouetteMale}
+          alt={isFemale ? "Silueta Femenil" : "Silueta Varonil"}
+          className="w-48 h-48 object-contain"
+        />
       </div>
 
       {/* Cabecera de la Cuarteta con Shito-Kai */}
