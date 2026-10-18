@@ -138,34 +138,84 @@ export function generateCuartetas(categoryKey, categoryName, athletes, tatamiNum
 const SEEDING_ORDER_16 = [1, 16, 9, 8, 5, 12, 13, 4, 3, 14, 11, 6, 7, 10, 15, 2];
 
 /**
- * Genera un bracket estándar de 8 o 16 competidores por hoja
+ * Genera un bracket estándar adaptativo según la cantidad real de competidores:
+ * - 1 o 2 atletas: Final Directa (1 combate por Oro y Plata)
+ * - 3 o 4 atletas: Semifinales (2 combates) y Gran Final (1 combate)
+ * - 5 a 8 atletas: Cuartos de Final (4 combates) -> Semifinales -> Gran Final
+ * - 9 a 16 atletas: Octavos de Final (8 combates) -> Cuartos -> Semifinales -> Gran Final
  */
 export function generateStandardBracket(categoryKey, categoryName, athletes, tatamiNumber = 1, forceSize = null, gender = null) {
   const count = athletes.length;
-  const bracketSize = forceSize || (count <= 8 ? 8 : 16);
+  let bracketSize = forceSize;
+  if (!bracketSize) {
+    if (count <= 2) {
+      bracketSize = 2;
+    } else if (count <= 4) {
+      bracketSize = 4;
+    } else if (count <= 8) {
+      bracketSize = 8;
+    } else {
+      bracketSize = 16;
+    }
+  }
+
   const separated = separateDojos(athletes);
   const resolvedGender = gender || (categoryName.toUpperCase().includes('FEMENIL') ? 'F' : 'M');
 
-  // Colocar competidores en las posiciones de siembra
+  // Colocar competidores en las posiciones de siembra según el tamaño
   const slots = new Array(bracketSize).fill(null);
-  for (let i = 0; i < separated.length && i < bracketSize; i++) {
-    const seedPos = bracketSize === 16 ? SEEDING_ORDER_16[i] - 1 : (i % 2 === 0 ? i / 2 : bracketSize - Math.ceil(i / 2));
-    slots[seedPos] = separated[i];
+  if (bracketSize === 2) {
+    slots[0] = separated[0] || null;
+    slots[1] = separated[1] || null;
+  } else if (bracketSize === 4) {
+    if (count === 3) {
+      // Si son 3: Semifinal 1 (atleta 0 vs atleta 1), Semifinal 2 (atleta 2 vs Bye que avanza a la final)
+      slots[0] = separated[0];
+      slots[1] = separated[1];
+      slots[2] = separated[2];
+      slots[3] = null;
+    } else {
+      for (let i = 0; i < separated.length && i < 4; i++) {
+        slots[i] = separated[i];
+      }
+    }
+  } else {
+    for (let i = 0; i < separated.length && i < bracketSize; i++) {
+      const seedPos = bracketSize === 16 ? SEEDING_ORDER_16[i] - 1 : (i % 2 === 0 ? i / 2 : bracketSize - Math.ceil(i / 2));
+      slots[seedPos] = separated[i];
+    }
   }
 
   const bracketId = `bracket_${categoryKey}`;
-
-  // Rondas según tamaño
   const rounds = [];
-  if (bracketSize === 16) {
-    // Ronda 1: Octavos (8 combates)
+
+  if (bracketSize === 2) {
+    // 1 sola ronda: Gran Final Directa por campeonato
+    const aka = slots[0];
+    const ao = slots[1];
+    const isBye = !aka || !ao;
+    rounds.push({
+      name: 'Gran Final',
+      matches: [{
+        id: `${bracketId}_final_m1`,
+        matchNumber: 1,
+        aka,
+        ao,
+        scoreAka: 0,
+        scoreAo: 0,
+        winner: isBye ? (aka || ao) : null,
+        isBye,
+      }]
+    });
+  } else if (bracketSize === 4) {
+    // Ronda 1: Semifinales (2 combates)
     const r1Matches = [];
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 2; i++) {
       const aka = slots[i * 2];
       const ao = slots[i * 2 + 1];
       const isBye = !aka || !ao;
       r1Matches.push({
-        id: `${bracketId}_r1_m${i + 1}`,
+        id: `${bracketId}_sf_m${i + 1}`,
         matchNumber: i + 1,
         aka,
         ao,
@@ -175,53 +225,23 @@ export function generateStandardBracket(categoryKey, categoryName, athletes, tat
         isBye,
       });
     }
-    rounds.push({ name: 'Octavos de Final', matches: r1Matches });
+    rounds.push({ name: 'Semifinales', matches: r1Matches });
 
-    // Ronda 2: Cuartos de Final (4 combates)
-    const r2Matches = [];
-    for (let i = 0; i < 4; i++) {
-      r2Matches.push({
-        id: `${bracketId}_r2_m${i + 1}`,
-        matchNumber: 8 + i + 1,
-        aka: r1Matches[i * 2].winner,
-        ao: r1Matches[i * 2 + 1].winner,
-        scoreAka: 0,
-        scoreAo: 0,
-        winner: null,
-      });
-    }
-    rounds.push({ name: 'Cuartos de Final', matches: r2Matches });
-
-    // Ronda 3: Semifinales (2 combates)
-    const r3Matches = [];
-    for (let i = 0; i < 2; i++) {
-      r3Matches.push({
-        id: `${bracketId}_r3_m${i + 1}`,
-        matchNumber: 12 + i + 1,
-        aka: r2Matches[i * 2].winner,
-        ao: r2Matches[i * 2 + 1].winner,
-        scoreAka: 0,
-        scoreAo: 0,
-        winner: null,
-      });
-    }
-    rounds.push({ name: 'Semifinales', matches: r3Matches });
-
-    // Ronda 4: Final (1 combate)
+    // Ronda 2: Gran Final (1 combate)
     rounds.push({
       name: 'Gran Final',
       matches: [{
-        id: `${bracketId}_r4_m1`,
-        matchNumber: 15,
-        aka: r3Matches[0].winner,
-        ao: r3Matches[1].winner,
+        id: `${bracketId}_final_m1`,
+        matchNumber: 3,
+        aka: r1Matches[0].winner,
+        ao: r1Matches[1].winner,
         scoreAka: 0,
         scoreAo: 0,
         winner: null,
       }]
     });
-  } else {
-    // Bracket de 8: Cuartos -> Semis -> Final
+  } else if (bracketSize === 8) {
+    // Ronda 1: Cuartos de Final (4 combates)
     const r1Matches = [];
     for (let i = 0; i < 4; i++) {
       const aka = slots[i * 2];
@@ -240,6 +260,7 @@ export function generateStandardBracket(categoryKey, categoryName, athletes, tat
     }
     rounds.push({ name: 'Cuartos de Final', matches: r1Matches });
 
+    // Ronda 2: Semifinales (2 combates)
     const r2Matches = [];
     for (let i = 0; i < 2; i++) {
       r2Matches.push({
@@ -254,6 +275,7 @@ export function generateStandardBracket(categoryKey, categoryName, athletes, tat
     }
     rounds.push({ name: 'Semifinales', matches: r2Matches });
 
+    // Ronda 3: Gran Final (1 combate)
     rounds.push({
       name: 'Gran Final',
       matches: [{
@@ -261,6 +283,66 @@ export function generateStandardBracket(categoryKey, categoryName, athletes, tat
         matchNumber: 7,
         aka: r2Matches[0].winner,
         ao: r2Matches[1].winner,
+        scoreAka: 0,
+        scoreAo: 0,
+        winner: null,
+      }]
+    });
+  } else {
+    // Bracket de 16: Octavos -> Cuartos -> Semis -> Final
+    const r1Matches = [];
+    for (let i = 0; i < 8; i++) {
+      const aka = slots[i * 2];
+      const ao = slots[i * 2 + 1];
+      const isBye = !aka || !ao;
+      r1Matches.push({
+        id: `${bracketId}_r1_m${i + 1}`,
+        matchNumber: i + 1,
+        aka,
+        ao,
+        scoreAka: 0,
+        scoreAo: 0,
+        winner: isBye ? (aka || ao) : null,
+        isBye,
+      });
+    }
+    rounds.push({ name: 'Octavos de Final', matches: r1Matches });
+
+    const r2Matches = [];
+    for (let i = 0; i < 4; i++) {
+      r2Matches.push({
+        id: `${bracketId}_r2_m${i + 1}`,
+        matchNumber: 8 + i + 1,
+        aka: r1Matches[i * 2].winner,
+        ao: r1Matches[i * 2 + 1].winner,
+        scoreAka: 0,
+        scoreAo: 0,
+        winner: null,
+      });
+    }
+    rounds.push({ name: 'Cuartos de Final', matches: r2Matches });
+
+    const r3Matches = [];
+    for (let i = 0; i < 2; i++) {
+      r3Matches.push({
+        id: `${bracketId}_r3_m${i + 1}`,
+        matchNumber: 12 + i + 1,
+        aka: r2Matches[i * 2].winner,
+        ao: r2Matches[i * 2 + 1].winner,
+        scoreAka: 0,
+        scoreAo: 0,
+        winner: null,
+      });
+    }
+    rounds.push({ name: 'Semifinales', matches: r3Matches });
+
+    rounds.push({
+      name: 'Gran Final',
+      matches: [{
+        id: `${bracketId}_r4_m1`,
+        matchNumber: 15,
+        aka: r3Matches[0].winner,
+        ao: r3Matches[1].winner,
         scoreAka: 0,
         scoreAo: 0,
         winner: null,

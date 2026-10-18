@@ -1,10 +1,11 @@
 import { jsPDF } from 'jspdf';
-import { SILHOUETTE_FEMALE_BASE64, SILHOUETTE_MALE_BASE64 } from '../assets/silhouetteData';
+import { SILHOUETTE_FEMALE_BASE64, SILHOUETTE_MALE_BASE64 } from '../assets/silhouetteData.js';
+import { SHITOKAI_LOGO_BASE64 } from '../assets/logoData.js';
 
 /**
  * Generador de PDF oficial para torneos de Karate Shito-Kai en formato Horizontal (Landscape).
  * Incorpora:
- * - Escudo Shito-Kai oficial en la esquina superior izquierda.
+ * - Escudo Shito-Kai oficial en la esquina superior izquierda (logo oficial enviado por el usuario).
  * - Líneas de llave estilo bracket conectadas con espacio amplio para rellenar a mano en mesa.
  * - Casillas de puntaje oficial [  ].
  * - Silueta sutil de karateka y detalle estético sin saturar la hoja.
@@ -19,8 +20,17 @@ const COLOR_MUTED = [100, 116, 139];  // Gris texto #64748B
 const COLOR_LINE = [148, 163, 184];   // Líneas de bracket nítidas #94A3B8
 const COLOR_HEADER_BG = [248, 250, 252];
 
-// Dibuja el escudo vectorial oficial de Shito-Kai en el PDF (pequeño y nítido)
+// Dibuja el escudo oficial de Shito-Kai en el PDF con la imagen oficial enviada por el usuario
 function drawShitoKaiLogoPDF(doc, x, y, size = 16) {
+  if (SHITOKAI_LOGO_BASE64) {
+    try {
+      doc.addImage(SHITOKAI_LOGO_BASE64, 'PNG', x, y, size, size, undefined, 'FAST');
+      return;
+    } catch (e) {
+      console.warn('Error adding ShitoKai logo image to PDF, using vector fallback:', e);
+    }
+  }
+
   const r = size / 2;
   const cx = x + r;
   const cy = y + r;
@@ -612,7 +622,15 @@ export function renderStandardBracketPage(doc, bracket, tournament, customBadge 
   const h = doc.internal.pageSize.getHeight();
 
   const is16 = bracket.bracketSize === 16;
-  const pageBadge = customBadge || (is16 ? 'Gráfica Oficial de 16 Posiciones' : 'Gráfica Oficial de 8 Posiciones');
+  let defaultBadge = 'Gráfica Oficial de 8 Posiciones';
+  if (bracket.bracketSize === 2) {
+    defaultBadge = 'Gran Final Directa — 2 Competidores';
+  } else if (bracket.bracketSize === 4) {
+    defaultBadge = 'Gráfica de 4 Posiciones (Semifinales y Final)';
+  } else if (bracket.bracketSize === 16) {
+    defaultBadge = 'Gráfica Oficial de 16 Posiciones';
+  }
+  const pageBadge = customBadge || defaultBadge;
 
   drawHeader(doc, tournament, bracket.categoryName, bracket.tatami, pageBadge);
   const isFemale = bracket.gender === 'F' || (bracket.categoryName && bracket.categoryName.toUpperCase().includes('FEMENIL'));
@@ -628,12 +646,22 @@ export function renderStandardBracketPage(doc, bracket, tournament, customBadge 
   // Área para el árbol de combates (llaves)
   const startX = 10;
   const availableTreeWidth = podioX - 6 - startX; // ~181.4 mm
-  const colWidth = availableTreeWidth / numRounds;
+  let colWidth = availableTreeWidth / numRounds;
+  let treeStartX = startX;
+
+  if (numRounds === 1) {
+    colWidth = 96;
+    treeStartX = startX + (availableTreeWidth - colWidth) / 2;
+  } else if (numRounds === 2) {
+    colWidth = 78;
+    treeStartX = startX + (availableTreeWidth - colWidth * 2) / 2;
+  }
+
   const startY = 38;
   const totalHeight = 146;
 
   rounds.forEach((round, roundIndex) => {
-    const roundX = startX + roundIndex * colWidth;
+    const roundX = treeStartX + roundIndex * colWidth;
     const matches = round.matches || [];
     const matchCount = matches.length;
     const slotSpacing = totalHeight / matchCount;
@@ -672,7 +700,7 @@ export function renderStandardBracketPage(doc, bracket, tournament, customBadge 
       if (roundIndex === 0) {
         textAka = match.aka?.fullName || (match.isBye ? 'BYE' : '—');
       }
-      const maxChars = is16 ? 16 : 22;
+      const maxChars = numRounds === 1 ? 32 : (numRounds === 2 ? 26 : (is16 ? 16 : 22));
       const safeTextAka = textAka.length > maxChars ? textAka.slice(0, maxChars - 1) + '…' : textAka;
       doc.text(safeTextAka, roundX + 7.5, lineY_aka - 1);
 
@@ -709,7 +737,7 @@ export function renderStandardBracketPage(doc, bracket, tournament, customBadge 
 
       // --- LÍNEAS DE CONEXIÓN DE BRACKET HACIA LA SIGUIENTE RONDA ---
       if (roundIndex < numRounds - 1) {
-        const nextRoundX = startX + (roundIndex + 1) * colWidth;
+        const nextRoundX = treeStartX + (roundIndex + 1) * colWidth;
         const lineStartX = roundX + boxW;
         const midLineX = lineStartX + (nextRoundX + 2 - lineStartX) / 2;
         const nextMatchIdx = Math.floor(matchIdx / 2);

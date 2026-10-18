@@ -17,10 +17,15 @@ export default function BracketCard({ bracket, tournament }) {
   // Renderizador para un bracket estándar con líneas de avance y espacio para rellenar a mano
   const renderBracketTree = (stdBracket) => {
     const rounds = stdBracket.rounds || [];
+    const treeContainerClass = rounds.length === 1
+      ? "max-w-md mx-auto py-3 space-y-4"
+      : rounds.length === 2
+        ? "flex items-start justify-center gap-8 min-w-[500px] py-3"
+        : "flex items-start gap-8 min-w-[780px] py-3";
 
     return (
       <div className="overflow-x-auto pb-4">
-        <div className="flex items-start gap-8 min-w-[780px] py-3">
+        <div className={treeContainerClass}>
           {rounds.map((round, rIdx) => {
             const matches = round.matches || [];
 
@@ -257,7 +262,7 @@ export default function BracketCard({ bracket, tournament }) {
               )}
             </div>
             <div className="text-[11px] text-slate-300 mt-0.5">
-              Tatami {bracket.tatami} • {isMultiPage ? `${bracket.totalAthletes} Atletas (Categoría Grande)` : `${bracket.bracketSize} posiciones oficiales`}
+              Tatami {bracket.tatami} • {isMultiPage ? `${bracket.totalAthletes} Atletas (Categoría Grande)` : bracket.bracketSize === 2 ? 'Gran Final Directa (2 Competidores)' : bracket.bracketSize === 4 ? '4 Posiciones (Semifinales y Final)' : `${bracket.bracketSize} posiciones oficiales`}
             </div>
           </div>
         </div>
