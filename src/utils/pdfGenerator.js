@@ -164,9 +164,28 @@ function drawKarateSilhouetteWatermark(doc, isFemale = false) {
   }
 }
 
+// Dibuja texto asegurando que nunca sobrepase maxWidth ni se encime con casillas adyacentes
+function drawFitText(doc, text, x, y, maxWidth, baseFontSize = 7.5, minFontSize = 5.5) {
+  if (!text) return;
+  let fontSize = baseFontSize;
+  doc.setFontSize(fontSize);
+  while (doc.getTextWidth(text) > maxWidth && fontSize > minFontSize) {
+    fontSize -= 0.25;
+    doc.setFontSize(fontSize);
+  }
+  let renderedText = text;
+  if (doc.getTextWidth(renderedText) > maxWidth) {
+    while (doc.getTextWidth(renderedText + '…') > maxWidth && renderedText.length > 2) {
+      renderedText = renderedText.slice(0, -1);
+    }
+    renderedText += '…';
+  }
+  doc.text(renderedText, x, y);
+}
+
 /**
  * Renderiza 1 Cuarteta completa en 1 hoja horizontal (Landscape)
- * Incluye Semifinal 1, Semifinal 2, Gran Final y Podio de 4 Medallas con líneas para rellenar a mano.
+ * Incluye Semifinal 1, Semifinal 2, Gran Final y Podio de 4 Medallas con líneas amplias para rellenar a mano.
  */
 export function renderCuartetaPage(doc, cuarteta, tournament) {
   const w = doc.internal.pageSize.getWidth();
@@ -174,7 +193,7 @@ export function renderCuartetaPage(doc, cuarteta, tournament) {
 
   const pageBadge = cuarteta.totalGroups > 1
     ? `Cuarteta ${cuarteta.groupIndex} de ${cuarteta.totalGroups} (4 Medallas al Podio)`
-    : 'Cuarteta Formativa Infantil — 4 Medallas Garantizadas';
+    : 'Cuarteta Infantil — 4 Medallas Garantizadas';
 
   drawHeader(doc, tournament, cuarteta.categoryName, cuarteta.tatami, pageBadge);
   const isFemale = cuarteta.gender === 'F' || (cuarteta.categoryName && cuarteta.categoryName.toUpperCase().includes('FEMENIL'));
@@ -182,8 +201,8 @@ export function renderCuartetaPage(doc, cuarteta, tournament) {
 
   const ath = cuarteta.athletes || [];
 
-  const leftX = 16;
-  const colW = 80;
+  const leftX = 12;
+  const colW = 88;
 
   // --- SEMIFINAL 1 ---
   doc.setFillColor(255, 255, 255);
@@ -200,42 +219,41 @@ export function renderCuartetaPage(doc, cuarteta, tournament) {
 
   // Atleta 1 (Aka)
   doc.setFillColor(...COLOR_AKA);
-  doc.rect(leftX + 3, 53, 3, 10, 'F');
+  doc.rect(leftX + 3, 53, 2.5, 10, 'F');
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
+  doc.setFontSize(7.5);
   doc.setTextColor(...COLOR_AKA);
-  doc.text('AKA:', leftX + 8, 59);
+  doc.text('AKA:', leftX + 7.5, 59);
   doc.setTextColor(...COLOR_DARK);
-  const name1 = ath[0]?.fullName || '__________________________';
-  doc.text(name1.length > 24 ? name1.slice(0, 23) + '…' : name1, leftX + 17, 59);
+  drawFitText(doc, ath[0]?.fullName || '__________________________', leftX + 17, 59, colW - 32, 7.5, 6);
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(6.5);
   doc.setTextColor(...COLOR_MUTED);
-  doc.text(ath[0]?.dojoName || 'Dojo / Escuela', leftX + 17, 63);
+  drawFitText(doc, ath[0]?.dojoName || 'Dojo / Escuela', leftX + 17, 63, colW - 32, 6.5, 5.5);
 
   // Casilla de puntos Aka
   doc.setDrawColor(...COLOR_LINE);
-  doc.rect(leftX + colW - 14, 53, 10, 8);
-  doc.text('Pts', leftX + colW - 9, 51, { align: 'center' });
-
-  // Atleta 2 (Ao)
-  doc.setFillColor(...COLOR_AO);
-  doc.rect(leftX + 3, 69, 3, 10, 'F');
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
-  doc.setTextColor(...COLOR_AO);
-  doc.text('AO:', leftX + 8, 75);
-  doc.setTextColor(...COLOR_DARK);
-  const name2 = ath[1]?.fullName || '__________________________';
-  doc.text(name2.length > 24 ? name2.slice(0, 23) + '…' : name2, leftX + 17, 75);
+  doc.rect(leftX + colW - 13, 53, 10, 8);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(6.5);
   doc.setTextColor(...COLOR_MUTED);
-  doc.text(ath[1]?.dojoName || 'Dojo / Escuela', leftX + 17, 79);
+  doc.text('Pts', leftX + colW - 8, 51, { align: 'center' });
+
+  // Atleta 2 (Ao)
+  doc.setFillColor(...COLOR_AO);
+  doc.rect(leftX + 3, 69, 2.5, 10, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  doc.setTextColor(...COLOR_AO);
+  doc.text('AO:', leftX + 7.5, 75);
+  doc.setTextColor(...COLOR_DARK);
+  drawFitText(doc, ath[1]?.fullName || '__________________________', leftX + 17, 75, colW - 32, 7.5, 6);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(...COLOR_MUTED);
+  drawFitText(doc, ath[1]?.dojoName || 'Dojo / Escuela', leftX + 17, 79, colW - 32, 6.5, 5.5);
 
   // Casilla de puntos Ao
   doc.setDrawColor(...COLOR_LINE);
-  doc.rect(leftX + colW - 14, 69, 10, 8);
+  doc.rect(leftX + colW - 13, 69, 10, 8);
 
   // --- SEMIFINAL 2 ---
   doc.setFillColor(255, 255, 255);
@@ -251,45 +269,44 @@ export function renderCuartetaPage(doc, cuarteta, tournament) {
 
   // Atleta 3 (Aka)
   doc.setFillColor(...COLOR_AKA);
-  doc.rect(leftX + 3, 111, 3, 10, 'F');
+  doc.rect(leftX + 3, 111, 2.5, 10, 'F');
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
+  doc.setFontSize(7.5);
   doc.setTextColor(...COLOR_AKA);
-  doc.text('AKA:', leftX + 8, 117);
+  doc.text('AKA:', leftX + 7.5, 117);
   doc.setTextColor(...COLOR_DARK);
-  const name3 = ath[2]?.fullName || '__________________________';
-  doc.text(name3.length > 24 ? name3.slice(0, 23) + '…' : name3, leftX + 17, 117);
+  drawFitText(doc, ath[2]?.fullName || '__________________________', leftX + 17, 117, colW - 32, 7.5, 6);
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(6.5);
   doc.setTextColor(...COLOR_MUTED);
-  doc.text(ath[2]?.dojoName || 'Dojo / Escuela', leftX + 17, 121);
+  drawFitText(doc, ath[2]?.dojoName || 'Dojo / Escuela', leftX + 17, 121, colW - 32, 6.5, 5.5);
 
   // Casilla puntos Aka
   doc.setDrawColor(...COLOR_LINE);
-  doc.rect(leftX + colW - 14, 111, 10, 8);
-  doc.text('Pts', leftX + colW - 9, 109, { align: 'center' });
-
-  // Atleta 4 (Ao)
-  doc.setFillColor(...COLOR_AO);
-  doc.rect(leftX + 3, 127, 3, 10, 'F');
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
-  doc.setTextColor(...COLOR_AO);
-  doc.text('AO:', leftX + 8, 133);
-  doc.setTextColor(...COLOR_DARK);
-  const name4 = ath[3]?.fullName || '__________________________';
-  doc.text(name4.length > 24 ? name4.slice(0, 23) + '…' : name4, leftX + 17, 133);
+  doc.rect(leftX + colW - 13, 111, 10, 8);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(6.5);
   doc.setTextColor(...COLOR_MUTED);
-  doc.text(ath[3]?.dojoName || 'Dojo / Escuela', leftX + 17, 137);
+  doc.text('Pts', leftX + colW - 8, 109, { align: 'center' });
+
+  // Atleta 4 (Ao)
+  doc.setFillColor(...COLOR_AO);
+  doc.rect(leftX + 3, 127, 2.5, 10, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  doc.setTextColor(...COLOR_AO);
+  doc.text('AO:', leftX + 7.5, 133);
+  doc.setTextColor(...COLOR_DARK);
+  drawFitText(doc, ath[3]?.fullName || '__________________________', leftX + 17, 133, colW - 32, 7.5, 6);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(...COLOR_MUTED);
+  drawFitText(doc, ath[3]?.dojoName || 'Dojo / Escuela', leftX + 17, 137, colW - 32, 6.5, 5.5);
 
   // Casilla puntos Ao
   doc.setDrawColor(...COLOR_LINE);
-  doc.rect(leftX + colW - 14, 127, 10, 8);
+  doc.rect(leftX + colW - 13, 127, 10, 8);
 
   // --- LÍNEAS DE CONEXIÓN TIPO BRACKET HACIA LA GRAN FINAL ---
-  const lineMidX = leftX + colW + 14;
+  const lineMidX = leftX + colW + 12; // 112 mm
   doc.setDrawColor(...COLOR_DARK);
   doc.setLineWidth(0.7);
 
@@ -302,11 +319,11 @@ export function renderCuartetaPage(doc, cuarteta, tournament) {
   doc.line(lineMidX, 122, lineMidX, 101);
 
   // Rama hacia la Gran Final
-  const finalX = lineMidX + 14;
-  const finalW = 85;
+  const finalX = lineMidX + 10; // 122 mm
+  const finalW = 74;
   doc.line(lineMidX, 93, finalX, 93);
 
-  // --- GRAN FINAL CON ESPACIO PARA RELLENAR A MANO ---
+  // --- GRAN FINAL CON ESPACIO DESPEJADO PARA RELLENAR A MANO ---
   doc.setFillColor(255, 255, 255);
   doc.setDrawColor(...COLOR_DARK);
   doc.setLineWidth(0.8);
@@ -319,41 +336,52 @@ export function renderCuartetaPage(doc, cuarteta, tournament) {
   doc.setFontSize(8.5);
   doc.text('COMBATE 3 — GRAN FINAL (ORO Y PLATA)', finalX + finalW / 2, 75.5, { align: 'center' });
 
-  // Finalista Aka (espacio para rellenar a mano)
+  // Finalista Aka (espacio despejado para rellenar a mano)
   doc.setFillColor(...COLOR_AKA);
-  doc.rect(finalX + 3, 83, 3, 12, 'F');
+  doc.rect(finalX + 3, 83, 2.5, 12, 'F');
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(7.5);
   doc.setTextColor(...COLOR_AKA);
-  doc.text('AKA:', finalX + 8, 89);
-  doc.setTextColor(...COLOR_DARK);
-  doc.text('Ganador Combate 1:', finalX + 17, 88);
+  doc.text('AKA:', finalX + 7.5, 89);
   doc.setDrawColor(...COLOR_LINE);
-  doc.line(finalX + 17, 94, finalX + finalW - 18, 94); // Línea para rellenar a mano
+  doc.setLineWidth(0.4);
+  doc.line(finalX + 18, 91, finalX + finalW - 16, 91); // Línea amplia y limpia para rellenar a mano
 
   // Casilla Pts Finalista Aka
-  doc.rect(finalX + finalW - 14, 84, 10, 9);
-  doc.text('Pts', finalX + finalW - 9, 82, { align: 'center' });
+  doc.rect(finalX + finalW - 13, 84, 9.5, 9);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(6.5);
+  doc.setTextColor(...COLOR_MUTED);
+  doc.text('Pts', finalX + finalW - 8.2, 82, { align: 'center' });
 
-  // Finalista Ao (espacio para rellenar a mano)
+  // Finalista Ao (espacio despejado para rellenar a mano)
   doc.setFillColor(...COLOR_AO);
-  doc.rect(finalX + 3, 102, 3, 12, 'F');
+  doc.rect(finalX + 3, 102, 2.5, 12, 'F');
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(7.5);
   doc.setTextColor(...COLOR_AO);
-  doc.text('AO:', finalX + 8, 108);
-  doc.setTextColor(...COLOR_DARK);
-  doc.text('Ganador Combate 2:', finalX + 17, 107);
+  doc.text('AO:', finalX + 7.5, 108);
   doc.setDrawColor(...COLOR_LINE);
-  doc.line(finalX + 17, 113, finalX + finalW - 18, 113); // Línea para rellenar a mano
+  doc.setLineWidth(0.4);
+  doc.line(finalX + 18, 110, finalX + finalW - 16, 110); // Línea amplia y limpia para rellenar a mano
 
   // Casilla Pts Finalista Ao
-  doc.rect(finalX + finalW - 14, 103, 10, 9);
+  doc.rect(finalX + finalW - 13, 103, 9.5, 9);
 
-  // --- PODIO DE PREMIACIÓN (4 MEDALLAS GARANTIZADAS) ---
-  const podioX = finalX + finalW + 12;
-  const podioW = w - podioX - 12;
+  // --- CONECTOR HACIA EL PODIO OFICIAL ---
+  const podioX = 204;
+  const podioW = w - 10 - podioX; // 65.4 mm
+  const midChampX = 200;
 
+  doc.setDrawColor(217, 119, 6);
+  doc.setLineWidth(0.7);
+  doc.line(finalX + finalW, 93, midChampX, 93);
+  doc.line(midChampX, 93, midChampX, 58);
+  doc.line(midChampX, 58, podioX, 58);
+  doc.setFillColor(217, 119, 6);
+  doc.triangle(podioX - 2.5, 56.5, podioX - 2.5, 59.5, podioX, 58, 'F');
+
+  // --- PODIO DE PREMIACIÓN (4 MEDALLAS) ---
   doc.setFillColor(255, 255, 255);
   doc.setDrawColor(...COLOR_LINE);
   doc.roundedRect(podioX, 42, podioW, 110, 2, 2, 'FD');
@@ -365,77 +393,65 @@ export function renderCuartetaPage(doc, cuarteta, tournament) {
   doc.setFontSize(8.5);
   doc.text('PODIO OFICIAL (4 MEDALLAS)', podioX + podioW / 2, 48.5, { align: 'center' });
 
-  // 1º ORO
+  // 1º ORO (Sin textos superpuestos)
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(7.5);
   doc.setTextColor(217, 119, 6);
-  doc.text('1º LUGAR (ORO):', podioX + 4, 58);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(6);
-  doc.setTextColor(...COLOR_MUTED);
-  doc.text('Ganador Gran Final', podioX + podioW - 4, 58, { align: 'right' });
+  doc.text('1º LUGAR (ORO)', podioX + 4, 57);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(6.5);
   doc.setTextColor(...COLOR_DARK);
-  doc.text('Atleta:', podioX + 4, 64);
+  doc.text('Atleta:', podioX + 4, 63.5);
   doc.setDrawColor(...COLOR_LINE);
-  doc.line(podioX + 13, 64.5, podioX + podioW - 4, 64.5);
+  doc.setLineWidth(0.4);
+  doc.line(podioX + 14, 64, podioX + podioW - 4, 64);
   doc.text('Dojo:', podioX + 4, 70.5);
-  doc.line(podioX + 13, 71, podioX + podioW - 4, 71);
+  doc.line(podioX + 14, 71, podioX + podioW - 4, 71);
 
-  // 2º PLATA
+  // 2º PLATA (Sin textos superpuestos)
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(7.5);
   doc.setTextColor(100, 116, 139);
-  doc.text('2º LUGAR (PLATA):', podioX + 4, 79);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(6);
-  doc.text('Subcampeón Gran Final', podioX + podioW - 4, 79, { align: 'right' });
+  doc.text('2º LUGAR (PLATA)', podioX + 4, 80);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(6.5);
   doc.setTextColor(...COLOR_DARK);
-  doc.text('Atleta:', podioX + 4, 85);
-  doc.line(podioX + 13, 85.5, podioX + podioW - 4, 85.5);
-  doc.text('Dojo:', podioX + 4, 91.5);
-  doc.line(podioX + 13, 92, podioX + podioW - 4, 92);
+  doc.text('Atleta:', podioX + 4, 86.5);
+  doc.line(podioX + 14, 87, podioX + podioW - 4, 87);
+  doc.text('Dojo:', podioX + 4, 93.5);
+  doc.line(podioX + 14, 94, podioX + podioW - 4, 94);
 
-  // 3º BRONCE 1
+  // 3º BRONCE 1 (Sin textos superpuestos)
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(7.5);
   doc.setTextColor(180, 83, 9);
-  doc.text('3º LUGAR (BRONCE):', podioX + 4, 100);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(6);
-  doc.text('Perdedor Combate 1', podioX + podioW - 4, 100, { align: 'right' });
+  doc.text('3º LUGAR (BRONCE)', podioX + 4, 103);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(6.5);
   doc.setTextColor(...COLOR_DARK);
-  doc.text('Atleta:', podioX + 4, 106);
-  doc.line(podioX + 13, 106.5, podioX + podioW - 4, 106.5);
-  doc.text('Dojo:', podioX + 4, 112.5);
-  doc.line(podioX + 13, 113, podioX + podioW - 4, 113);
+  doc.text('Atleta:', podioX + 4, 109.5);
+  doc.line(podioX + 14, 110, podioX + podioW - 4, 110);
+  doc.text('Dojo:', podioX + 4, 116.5);
+  doc.line(podioX + 14, 117, podioX + podioW - 4, 117);
 
-  // 3º BRONCE 2
+  // 3º BRONCE 2 (Sin textos superpuestos)
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(7.5);
   doc.setTextColor(180, 83, 9);
-  doc.text('3º LUGAR (BRONCE):', podioX + 4, 121);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(6);
-  doc.text('Perdedor Combate 2', podioX + podioW - 4, 121, { align: 'right' });
+  doc.text('3º LUGAR (BRONCE)', podioX + 4, 126);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(6.5);
   doc.setTextColor(...COLOR_DARK);
-  doc.text('Atleta:', podioX + 4, 127);
-  doc.line(podioX + 13, 127.5, podioX + podioW - 4, 127.5);
-  doc.text('Dojo:', podioX + 4, 133.5);
-  doc.line(podioX + 13, 134, podioX + podioW - 4, 134);
+  doc.text('Atleta:', podioX + 4, 132.5);
+  doc.line(podioX + 14, 133, podioX + podioW - 4, 133);
+  doc.text('Dojo:', podioX + 4, 139.5);
+  doc.line(podioX + 14, 140, podioX + podioW - 4, 140);
 
-  // Mensaje formativo
-  doc.setFont('helvetica', 'italic');
-  doc.setFontSize(6.5);
-  doc.setTextColor(217, 119, 6);
-  doc.text('✓ Formato Formativo: Todos los 4 niños reciben medalla', podioX + podioW / 2, 144, { align: 'center' });
+  // Pie oficial Shito-Kai
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(6);
+  doc.setTextColor(...COLOR_MUTED);
+  doc.text('Shito-Kai México • 4 Medallistas', podioX + podioW / 2, 148, { align: 'center' });
 
   drawFooter(doc);
 }
@@ -693,16 +709,13 @@ export function renderStandardBracketPage(doc, bracket, tournament, customBadge 
 
       // Texto AKA
       doc.setFont('helvetica', roundIndex === 0 && match.aka ? 'bold' : 'normal');
-      doc.setFontSize(6.8);
       doc.setTextColor(...COLOR_DARK);
 
       let textAka = '___________________';
       if (roundIndex === 0) {
         textAka = match.aka?.fullName || (match.isBye ? 'BYE' : '—');
       }
-      const maxChars = numRounds === 1 ? 32 : (numRounds === 2 ? 26 : (is16 ? 16 : 22));
-      const safeTextAka = textAka.length > maxChars ? textAka.slice(0, maxChars - 1) + '…' : textAka;
-      doc.text(safeTextAka, roundX + 7.5, lineY_aka - 1);
+      drawFitText(doc, textAka, roundX + 7.5, lineY_aka - 1, boxW - 16, 6.8, 5.2);
 
       // Casilla de puntos AKA [ ]
       doc.rect(roundX + boxW - 7.5, lineY_aka - 4, 6.5, 5);
@@ -716,15 +729,13 @@ export function renderStandardBracketPage(doc, bracket, tournament, customBadge 
 
       // Texto AO
       doc.setFont('helvetica', roundIndex === 0 && match.ao ? 'bold' : 'normal');
-      doc.setFontSize(6.8);
       doc.setTextColor(...COLOR_DARK);
 
       let textAo = '___________________';
       if (roundIndex === 0) {
         textAo = match.ao?.fullName || (match.isBye ? 'BYE' : '—');
       }
-      const safeTextAo = textAo.length > maxChars ? textAo.slice(0, maxChars - 1) + '…' : textAo;
-      doc.text(safeTextAo, roundX + 7.5, lineY_ao - 1);
+      drawFitText(doc, textAo, roundX + 7.5, lineY_ao - 1, boxW - 16, 6.8, 5.2);
 
       // Casilla de puntos AO [ ]
       doc.rect(roundX + boxW - 7.5, lineY_ao - 4, 6.5, 5);

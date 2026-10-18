@@ -54,7 +54,7 @@ export default function CuartetaCard({ cuarteta, tournament, onMatchWinner }) {
           <div>
             <h3 className="font-semibold text-sm tracking-wide text-white">{cuarteta.categoryName}</h3>
             <div className="text-[11px] text-slate-300">
-              Tatami {cuarteta.tatami} • Formato Formativo: 4 Medallas Garantizadas (1 por Hoja)
+              Tatami {cuarteta.tatami} • Cuarteta Infantil: 4 Medallas Garantizadas (1 por Hoja)
             </div>
           </div>
         </div>
@@ -237,7 +237,7 @@ export default function CuartetaCard({ cuarteta, tournament, onMatchWinner }) {
               <span>{isFemale ? 'Rama Femenil' : 'Rama Varonil'}</span>
             </div>
             <div className="text-[9px] text-slate-500 font-medium mt-1">
-              Shito-Kai • Formativa Infantil
+              Shito-Kai • Cuarteta Infantil
             </div>
           </div>
         </div>
