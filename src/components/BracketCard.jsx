@@ -51,13 +51,20 @@ export default function BracketCard({ bracket, tournament }) {
 
                       {/* Esquina Aka (Rojo coral suave) */}
                       <div className="p-2 border-b border-slate-100 flex items-center justify-between text-xs hover:bg-slate-50 transition-colors">
-                        <div className="flex items-center gap-1.5 truncate flex-1">
-                          <span className="w-2 h-4 bg-rose-500 rounded-xs shrink-0" />
-                          <span className="font-semibold text-slate-900 truncate">
-                            {rIdx === 0
-                              ? (m.aka?.fullName || (m.isBye ? 'BYE' : '—'))
-                              : '____________________'}
-                          </span>
+                        <div className="flex items-center gap-2 truncate flex-1">
+                          <span className="w-2 h-7 bg-rose-500 rounded-xs shrink-0" />
+                          <div className="truncate">
+                            <div className="font-semibold text-slate-900 truncate">
+                              {rIdx === 0
+                                ? (m.aka?.fullName || (m.isBye ? 'BYE' : '—'))
+                                : '____________________'}
+                            </div>
+                            {rIdx === 0 && m.aka?.dojoName && (
+                              <div className="text-[10px] text-slate-500 font-normal truncate">
+                                {m.aka.dojoName}
+                              </div>
+                            )}
+                          </div>
                         </div>
                         <div className="flex items-center gap-1.5 ml-1">
                           <span className="text-[10px] font-mono text-slate-400 border border-slate-200 px-1 py-0.2 rounded bg-slate-50">[   ]</span>
@@ -66,13 +73,20 @@ export default function BracketCard({ bracket, tournament }) {
 
                       {/* Esquina Ao (Azul zafiro suave) */}
                       <div className="p-2 flex items-center justify-between text-xs hover:bg-slate-50 transition-colors">
-                        <div className="flex items-center gap-1.5 truncate flex-1">
-                          <span className="w-2 h-4 bg-blue-600 rounded-xs shrink-0" />
-                          <span className="font-semibold text-slate-900 truncate">
-                            {rIdx === 0
-                              ? (m.ao?.fullName || (m.isBye ? 'BYE' : '—'))
-                              : '____________________'}
-                          </span>
+                        <div className="flex items-center gap-2 truncate flex-1">
+                          <span className="w-2 h-7 bg-blue-600 rounded-xs shrink-0" />
+                          <div className="truncate">
+                            <div className="font-semibold text-slate-900 truncate">
+                              {rIdx === 0
+                                ? (m.ao?.fullName || (m.isBye ? 'BYE' : '—'))
+                                : '____________________'}
+                            </div>
+                            {rIdx === 0 && m.ao?.dojoName && (
+                              <div className="text-[10px] text-slate-500 font-normal truncate">
+                                {m.ao.dojoName}
+                              </div>
+                            )}
+                          </div>
                         </div>
                         <div className="flex items-center gap-1.5 ml-1">
                           <span className="text-[10px] font-mono text-slate-400 border border-slate-200 px-1 py-0.2 rounded bg-slate-50">[   ]</span>

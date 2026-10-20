@@ -711,11 +711,17 @@ export function renderStandardBracketPage(doc, bracket, tournament, customBadge 
       doc.setFont('helvetica', roundIndex === 0 && match.aka ? 'bold' : 'normal');
       doc.setTextColor(...COLOR_DARK);
 
-      let textAka = '___________________';
-      if (roundIndex === 0) {
-        textAka = match.aka?.fullName || (match.isBye ? 'BYE' : '—');
+      if (roundIndex === 0 && match.aka && !match.isBye) {
+        drawFitText(doc, match.aka.fullName || '—', roundX + 7.5, lineY_aka - 2.2, boxW - 16, 6.5, 4.8);
+        if (match.aka.dojoName) {
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(...COLOR_MUTED);
+          drawFitText(doc, match.aka.dojoName, roundX + 7.5, lineY_aka - 0.5, boxW - 16, 5.0, 4.0);
+        }
+      } else {
+        const textAka = roundIndex === 0 ? (match.isBye ? 'BYE' : '—') : '___________________';
+        drawFitText(doc, textAka, roundX + 7.5, lineY_aka - 1, boxW - 16, 6.8, 5.2);
       }
-      drawFitText(doc, textAka, roundX + 7.5, lineY_aka - 1, boxW - 16, 6.8, 5.2);
 
       // Casilla de puntos AKA [ ]
       doc.rect(roundX + boxW - 7.5, lineY_aka - 4, 6.5, 5);
@@ -731,11 +737,17 @@ export function renderStandardBracketPage(doc, bracket, tournament, customBadge 
       doc.setFont('helvetica', roundIndex === 0 && match.ao ? 'bold' : 'normal');
       doc.setTextColor(...COLOR_DARK);
 
-      let textAo = '___________________';
-      if (roundIndex === 0) {
-        textAo = match.ao?.fullName || (match.isBye ? 'BYE' : '—');
+      if (roundIndex === 0 && match.ao && !match.isBye) {
+        drawFitText(doc, match.ao.fullName || '—', roundX + 7.5, lineY_ao - 2.2, boxW - 16, 6.5, 4.8);
+        if (match.ao.dojoName) {
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(...COLOR_MUTED);
+          drawFitText(doc, match.ao.dojoName, roundX + 7.5, lineY_ao - 0.5, boxW - 16, 5.0, 4.0);
+        }
+      } else {
+        const textAo = roundIndex === 0 ? (match.isBye ? 'BYE' : '—') : '___________________';
+        drawFitText(doc, textAo, roundX + 7.5, lineY_ao - 1, boxW - 16, 6.8, 5.2);
       }
-      drawFitText(doc, textAo, roundX + 7.5, lineY_ao - 1, boxW - 16, 6.8, 5.2);
 
       // Casilla de puntos AO [ ]
       doc.rect(roundX + boxW - 7.5, lineY_ao - 4, 6.5, 5);

@@ -36,6 +36,8 @@ export function loadTournamentState() {
       ...(parsed.tournament || {}),
       feeSingleModality: parsed.tournament?.feeSingleModality ?? 300,
       feeDoubleModality: parsed.tournament?.feeDoubleModality ?? 300,
+      divideAdultsByWeight: parsed.tournament?.divideAdultsByWeight ?? false,
+      allowMixedInfant: parsed.tournament?.allowMixedInfant ?? true,
     };
 
     return {

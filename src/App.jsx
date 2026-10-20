@@ -146,8 +146,11 @@ export default function App() {
 
   // Agrupación automática en categorías
   const categoriesMap = useMemo(() => {
-    return groupAthletesIntoCategories(state.athletes || [], state.tournament.date, dojosMap);
-  }, [state.athletes, state.tournament.date, dojosMap]);
+    return groupAthletesIntoCategories(state.athletes || [], state.tournament.date, dojosMap, {
+      divideAdultsByWeight: state.tournament.divideAdultsByWeight ?? false,
+      allowMixedInfant: state.tournament.allowMixedInfant ?? true,
+    });
+  }, [state.athletes, state.tournament.date, dojosMap, state.tournament.divideAdultsByWeight, state.tournament.allowMixedInfant]);
 
   // Generación automática de llaves
   const brackets = useMemo(() => {
@@ -582,6 +585,7 @@ export default function App() {
         }}
         onResetAllToZero={handleResetAllToZero}
         onLoadDemoAthletes={handleLoadDemoAthletes}
+        onExportBackup={() => exportTournamentToFile(state)}
       />
 
       {/* Modal de Cobro y Tesorería por Dojos */}

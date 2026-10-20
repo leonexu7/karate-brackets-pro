@@ -186,6 +186,11 @@ export default function TeacherRegistrationView({
       return;
     }
 
+    if (suggestedInfo?.isCuarteta && (!athleteForm.height || parseFloat(athleteForm.height) <= 0)) {
+      alert('La estatura (cm) es obligatoria para niños en categorías infantiles para poder emparejar las cuartetas por tamaño equivalente.');
+      return;
+    }
+
     const kyu = getKyuInfo(athleteForm.beltId);
     const finalCompCategory = resolveCompetingCategory(athleteForm.beltId, athleteForm.competingCategory);
     const catInfo = getKyuCategoryInfo(finalCompCategory);
@@ -426,6 +431,12 @@ export default function TeacherRegistrationView({
     e.preventDefault();
     if (!editingAthlete.fullName?.trim() || !editingAthlete.birthDate) {
       alert('El nombre y la fecha de nacimiento son obligatorios.');
+      return;
+    }
+
+    const editAge = calculateAge(editingAthlete.birthDate, tournament.date);
+    if (editAge !== null && editAge <= 9 && (!editingAthlete.height || parseFloat(editingAthlete.height) <= 0)) {
+      alert('La estatura (cm) es obligatoria para niños en categorías infantiles para poder emparejar por cuartetas equivalentes.');
       return;
     }
 
@@ -933,17 +944,20 @@ export default function TeacherRegistrationView({
                 <div>
                   <label className="block font-semibold text-slate-800 mb-1 flex items-center gap-1">
                     <Ruler className="w-3.5 h-3.5 text-slate-500" />
-                    Estatura (cm) - Opcional
+                    Estatura (cm) {suggestedInfo?.isCuarteta ? <span className="text-rose-600 font-bold">* (Obligatoria en infantiles para cuartetas)</span> : <span className="text-slate-400 font-normal">• Opcional</span>}
                   </label>
                   <input
                     type="number"
                     step="1"
-                    min="80"
+                    min="70"
                     max="220"
-                    placeholder="Ej. 125"
+                    required={suggestedInfo?.isCuarteta}
+                    placeholder={suggestedInfo?.isCuarteta ? "Ej. 120 (Obligatorio)" : "Ej. 125"}
                     value={athleteForm.height}
                     onChange={(e) => setAthleteForm({ ...athleteForm, height: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-hidden focus:ring-2 focus:ring-rose-500 bg-white"
+                    className={`w-full px-3 py-2 border rounded-lg outline-hidden focus:ring-2 focus:ring-rose-500 bg-white ${
+                      suggestedInfo?.isCuarteta && !athleteForm.height ? 'border-amber-400 bg-amber-50/40' : 'border-slate-300'
+                    }`}
                   />
                 </div>
               </div>
@@ -1533,10 +1547,14 @@ export default function TeacherRegistrationView({
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-slate-800 mb-1">Estatura (cm)</label>
+                    <label className="block font-semibold text-slate-800 mb-1">
+                      Estatura (cm) {editingAthlete.birthDate && calculateAge(editingAthlete.birthDate, tournament.date) <= 9 ? <span className="text-rose-600 font-bold">* (Obligatoria en cuartetas)</span> : <span className="text-slate-400 font-normal">• Opcional</span>}
+                    </label>
                     <input
                       type="number"
                       step="1"
+                      min="70"
+                      max="220"
                       placeholder="Ej. 130"
                       value={editingAthlete.height || ''}
                       onChange={(e) => setEditingAthlete({ ...editingAthlete, height: e.target.value !== '' ? parseFloat(e.target.value) : null })}

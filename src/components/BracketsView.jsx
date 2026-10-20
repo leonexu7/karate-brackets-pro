@@ -1,7 +1,24 @@
 import React, { useState, useMemo } from 'react';
-import { Trophy, Printer, Filter, Search, Award, Shield, AlertCircle } from 'lucide-react';
+import { Trophy, Printer, Filter, Search, Award, ArrowDownUp, Shield, AlertCircle } from 'lucide-react';
 import CuartetaCard from './CuartetaCard';
 import BracketCard from './BracketCard';
+
+function getBracketAgeRank(b) {
+  const name = (b.categoryName || '').toLowerCase();
+  const key = (b.categoryKey || '').toLowerCase();
+  if (name.includes('-5') || key.includes('u5')) return 5;
+  if (name.includes('6-7') || key.includes('6-7')) return 7;
+  if (name.includes('8-9') || key.includes('8-9')) return 9;
+  if (name.includes('10-11') || key.includes('10-11')) return 11;
+  if (name.includes('12-13') || key.includes('12-13')) return 13;
+  if (name.includes('14-15') || key.includes('14-15')) return 15;
+  if (name.includes('16-17') || key.includes('16-17')) return 17;
+  if (name.includes('18-20') || key.includes('18-20') || key.includes('u21')) return 20;
+  if (name.includes('senior') || name.includes('+18') || key.includes('senior')) return 25;
+  if (name.includes('+35') || key.includes('master35')) return 35;
+  if (name.includes('+45') || key.includes('master45')) return 45;
+  return 15;
+}
 
 export default function BracketsView({
   brackets,
@@ -12,20 +29,60 @@ export default function BracketsView({
 }) {
   const [filterTatami, setFilterTatami] = useState('all');
   const [filterType, setFilterType] = useState('all'); // 'all', 'cuarteta', 'standard'
+  const [filterGender, setFilterGender] = useState('all'); // 'all', 'M', 'F', 'MIXTO'
+  const [filterModality, setFilterModality] = useState('all'); // 'all', 'kata', 'kumite'
+  const [sortOrder, setSortOrder] = useState('age_asc'); // 'age_asc', 'age_desc', 'name_asc', 'tatami'
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredBrackets = useMemo(() => {
-    return brackets.filter(b => {
+    const list = brackets.filter(b => {
       const matchTatami = filterTatami === 'all' || String(b.tatami) === String(filterTatami);
       const matchType = filterType === 'all'
         ? true
         : filterType === 'cuarteta'
           ? b.type === 'cuarteta'
           : b.type !== 'cuarteta';
+
+      // Filtro por Rama / Sexo
+      let matchGender = true;
+      const bGender = b.gender || (b.categoryName.toUpperCase().includes('FEMENIL') ? 'F' : (b.categoryName.toUpperCase().includes('MIXTO') ? 'MIXTO' : 'M'));
+      if (filterGender === 'M') {
+        matchGender = bGender === 'M';
+      } else if (filterGender === 'F') {
+        matchGender = bGender === 'F';
+      } else if (filterGender === 'MIXTO') {
+        matchGender = bGender === 'MIXTO' || b.categoryName.toUpperCase().includes('MIXTO');
+      }
+
+      // Filtro por Modalidad (Kata / Kumite)
+      let matchModality = true;
+      if (filterModality === 'kata') {
+        matchModality = b.categoryName.toLowerCase().includes('kata');
+      } else if (filterModality === 'kumite') {
+        matchModality = b.categoryName.toLowerCase().includes('kumite');
+      }
+
       const matchSearch = b.categoryName.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchTatami && matchType && matchSearch;
+      return matchTatami && matchType && matchGender && matchModality && matchSearch;
     });
-  }, [brackets, filterTatami, filterType, searchTerm]);
+
+    // Ordenamiento dinámico
+    return list.sort((a, b) => {
+      if (sortOrder === 'age_asc') {
+        const diff = getBracketAgeRank(a) - getBracketAgeRank(b);
+        return diff !== 0 ? diff : a.categoryName.localeCompare(b.categoryName);
+      }
+      if (sortOrder === 'age_desc') {
+        const diff = getBracketAgeRank(b) - getBracketAgeRank(a);
+        return diff !== 0 ? diff : a.categoryName.localeCompare(b.categoryName);
+      }
+      if (sortOrder === 'tatami') {
+        const diff = (a.tatami || 1) - (b.tatami || 1);
+        return diff !== 0 ? diff : a.categoryName.localeCompare(b.categoryName);
+      }
+      return a.categoryName.localeCompare(b.categoryName);
+    });
+  }, [brackets, filterTatami, filterType, filterGender, filterModality, sortOrder, searchTerm]);
 
   const cuartetasCount = brackets.filter(b => b.type === 'cuarteta').length;
   const standardCount = brackets.filter(b => b.type !== 'cuarteta').length;
@@ -37,7 +94,7 @@ export default function BracketsView({
         {/* Filtros */}
         <div className="flex flex-wrap items-center gap-2 flex-1 min-w-[280px]">
           {/* Búsqueda */}
-          <div className="relative flex-1 min-w-[200px]">
+          <div className="relative flex-1 min-w-[180px]">
             <Search className="w-4 h-4 text-tatami-400 absolute left-3 top-2.5" />
             <input
               type="text"
@@ -47,6 +104,45 @@ export default function BracketsView({
               className="w-full pl-9 pr-3 py-1.5 text-xs border border-tatami-300 rounded-lg outline-hidden focus:ring-1 focus:ring-aka"
             />
           </div>
+
+          {/* Ordenar por Edad / Categoría / Tatami */}
+          <div className="flex items-center gap-1">
+            <ArrowDownUp className="w-3.5 h-3.5 text-tatami-500" />
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="px-2.5 py-1.5 text-xs border border-tatami-300 rounded-lg bg-white text-tatami-700 font-medium"
+              title="Criterio de ordenamiento"
+            >
+              <option value="age_asc">Edad: Menor a Mayor (-5 años a Master)</option>
+              <option value="age_desc">Edad: Mayor a Menor (Master a -5 años)</option>
+              <option value="name_asc">Categoría: Alfabético A-Z</option>
+              <option value="tatami">Área: Por número de Tatami</option>
+            </select>
+          </div>
+
+          {/* Filtro Rama (Varonil / Femenil / Mixto) */}
+          <select
+            value={filterGender}
+            onChange={(e) => setFilterGender(e.target.value)}
+            className="px-2.5 py-1.5 text-xs border border-tatami-300 rounded-lg bg-white text-tatami-700"
+          >
+            <option value="all">Todas las Ramas</option>
+            <option value="M">Solo Varonil</option>
+            <option value="F">Solo Femenil</option>
+            <option value="MIXTO">Solo Mixto</option>
+          </select>
+
+          {/* Filtro Modalidad (Kata / Kumite) */}
+          <select
+            value={filterModality}
+            onChange={(e) => setFilterModality(e.target.value)}
+            className="px-2.5 py-1.5 text-xs border border-tatami-300 rounded-lg bg-white text-tatami-700"
+          >
+            <option value="all">Kata y Kumite</option>
+            <option value="kata">Solo Kata</option>
+            <option value="kumite">Solo Kumite</option>
+          </select>
 
           {/* Filtro Tatami */}
           <select
@@ -66,7 +162,7 @@ export default function BracketsView({
             onChange={(e) => setFilterType(e.target.value)}
             className="px-2.5 py-1.5 text-xs border border-tatami-300 rounded-lg bg-white text-tatami-700"
           >
-            <option value="all">Todas las Gráficas ({brackets.length})</option>
+            <option value="all">Formato: Todos ({brackets.length})</option>
             <option value="cuarteta">Cuartetas Infantiles ({cuartetasCount})</option>
             <option value="standard">Gráficas Mayores ({standardCount})</option>
           </select>

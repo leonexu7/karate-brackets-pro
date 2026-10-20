@@ -50,15 +50,18 @@ export function separateDojos(athletes) {
  * Cada cuarteta garantiza 4 medallas (1 Oro, 1 Plata, 2 Bronces).
  */
 export function generateCuartetas(categoryKey, categoryName, athletes, tatamiNumber = 1, gender = null) {
-  const separated = separateDojos(athletes);
+  // athletes viene pre-ordenado por estatura (y peso) desde autoClassifier.
+  // Agrupamos en bloques de 4 para que cada cuarteta sea lo más equivalente posible en estatura.
   const cuartetas = [];
   const chunkSize = 4;
-  const resolvedGender = gender || (categoryName.toUpperCase().includes('FEMENIL') ? 'F' : 'M');
+  const totalCuartetas = Math.ceil(athletes.length / chunkSize);
+  const resolvedGender = gender || (categoryName.toUpperCase().includes('FEMENIL') ? 'F' : (categoryName.toUpperCase().includes('MIXTO') ? 'MIXTO' : 'M'));
 
-  for (let i = 0; i < separated.length; i += chunkSize) {
-    const chunk = separated.slice(i, i + chunkSize);
+  for (let i = 0; i < athletes.length; i += chunkSize) {
+    const rawChunk = athletes.slice(i, i + chunkSize);
+    // Aplicar separación de dojos dentro del grupo de estatura homogénea
+    const chunk = separateDojos(rawChunk);
     const cuartetaIndex = Math.floor(i / chunkSize) + 1;
-    const totalCuartetas = Math.ceil(separated.length / chunkSize);
 
     // Rellenar hasta 4 con null (Bye) si la última cuarteta tiene 2 o 3 competidores
     const slots = [
@@ -68,13 +71,29 @@ export function generateCuartetas(categoryKey, categoryName, athletes, tatamiNum
       chunk[3] || null,
     ];
 
+    // Detectar rango de estatura del grupo
+    const validHeights = rawChunk.map(a => parseFloat(a.height) || 0).filter(h => h > 0);
+    let heightBadge = '';
+    if (totalCuartetas > 1 && validHeights.length > 0) {
+      const minH = Math.min(...validHeights);
+      const maxH = Math.max(...validHeights);
+      if (maxH < 130) {
+        heightBadge = ' • Estatura < 130 cm';
+      } else if (minH >= 130) {
+        heightBadge = ' • Estatura ≥ 130 cm';
+      } else {
+        heightBadge = ` • ${Math.round(minH)}-${Math.round(maxH)} cm`;
+      }
+    }
+
     const cuartetaId = `cuarteta_${categoryKey}_${cuartetaIndex}`;
+    const groupSuffix = totalCuartetas > 1 ? ` (Grupo ${cuartetaIndex}/${totalCuartetas}${heightBadge})` : '';
 
     cuartetas.push({
       id: cuartetaId,
       type: 'cuarteta',
       categoryKey,
-      categoryName: totalCuartetas > 1 ? `${categoryName} (Grupo ${cuartetaIndex}/${totalCuartetas})` : categoryName,
+      categoryName: `${categoryName}${groupSuffix}`,
       groupIndex: cuartetaIndex,
       totalGroups: totalCuartetas,
       tatami: tatamiNumber,

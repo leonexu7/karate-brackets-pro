@@ -8,6 +8,8 @@ export const INITIAL_TOURNAMENT = {
   adminKey: 'karate2026', // Clave de seguridad por defecto para el organizador
   feeSingleModality: 300, // Costo de ficha oficial por 1 modalidad ($300 MXN)
   feeDoubleModality: 300, // Costo de ficha oficial por 2 modalidades ($300 MXN)
+  divideAdultsByWeight: false, // Por defecto en torneos chicos: Categoría abierta (Open) de peso en mayores
+  allowMixedInfant: true, // Permitir categoría mixta en 6-7 años si faltan competidores
 };
 
 // Iniciar con 0 dojos, 0 atletas y 0 equipos (totalmente limpio para registros reales)

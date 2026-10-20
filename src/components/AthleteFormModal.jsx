@@ -111,6 +111,11 @@ export default function AthleteFormModal({
     e.preventDefault();
     if (!formData.fullName.trim()) return;
 
+    if (suggestedInfo?.isCuarteta && (!formData.height || parseFloat(formData.height) <= 0)) {
+      alert('La estatura (cm) es obligatoria para niños en categorías infantiles para poder emparejar las cuartetas por tamaño equivalente.');
+      return;
+    }
+
     const kyu = getKyuInfo(formData.beltId);
     const finalCompCat = resolveCompetingCategory(formData.beltId, formData.competingCategory);
     const catInfo = getKyuCategoryInfo(finalCompCat);
@@ -330,17 +335,20 @@ export default function AthleteFormModal({
             <div>
               <label className="block font-semibold text-slate-700 mb-1 flex items-center gap-1">
                 <Ruler className="w-3.5 h-3.5 text-slate-500" />
-                Estatura (cm) - Opcional
+                Estatura (cm) {suggestedInfo?.isCuarteta ? <span className="text-rose-600 font-bold">* (Obligatorio en cuartetas)</span> : <span className="text-slate-400 font-normal">• Opcional</span>}
               </label>
               <input
                 type="number"
                 step="1"
-                min="80"
+                min="70"
                 max="220"
-                placeholder="Ej. 125"
+                required={suggestedInfo?.isCuarteta}
+                placeholder={suggestedInfo?.isCuarteta ? "Ej. 120 (Obligatorio)" : "Ej. 125"}
                 value={formData.height}
                 onChange={(e) => setFormData({ ...formData, height: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-hidden focus:ring-1 focus:ring-rose-500 bg-white"
+                className={`w-full px-3 py-2 border rounded-lg outline-hidden focus:ring-1 focus:ring-rose-500 bg-white ${
+                  suggestedInfo?.isCuarteta && !formData.height ? 'border-amber-400 bg-amber-50/40' : 'border-slate-300'
+                }`}
               />
             </div>
           </div>
