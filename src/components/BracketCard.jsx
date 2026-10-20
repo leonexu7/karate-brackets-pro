@@ -17,11 +17,9 @@ export default function BracketCard({ bracket, tournament }) {
   // Renderizador para un bracket estándar con líneas de avance y espacio para rellenar a mano
   const renderBracketTree = (stdBracket) => {
     const rounds = stdBracket.rounds || [];
-    const treeContainerClass = rounds.length === 1
-      ? "max-w-md mx-auto py-3 space-y-4"
-      : rounds.length === 2
-        ? "flex items-start justify-center gap-8 min-w-[500px] py-3"
-        : "flex items-start gap-8 min-w-[780px] py-3";
+    const treeContainerClass = rounds.length <= 3
+      ? "flex items-start gap-8 min-w-[700px] py-3"
+      : "flex items-start gap-8 min-w-[800px] py-3";
 
     return (
       <div className="overflow-x-auto pb-4">
@@ -55,11 +53,9 @@ export default function BracketCard({ bracket, tournament }) {
                           <span className="w-2 h-7 bg-rose-500 rounded-xs shrink-0" />
                           <div className="truncate">
                             <div className="font-semibold text-slate-900 truncate">
-                              {rIdx === 0
-                                ? (m.aka?.fullName || (m.isBye ? 'BYE' : '—'))
-                                : '____________________'}
+                              {m.aka?.fullName ? m.aka.fullName : '____________________'}
                             </div>
-                            {rIdx === 0 && m.aka?.dojoName && (
+                            {m.aka?.dojoName && (
                               <div className="text-[10px] text-slate-500 font-normal truncate">
                                 {m.aka.dojoName}
                               </div>
@@ -77,11 +73,9 @@ export default function BracketCard({ bracket, tournament }) {
                           <span className="w-2 h-7 bg-blue-600 rounded-xs shrink-0" />
                           <div className="truncate">
                             <div className="font-semibold text-slate-900 truncate">
-                              {rIdx === 0
-                                ? (m.ao?.fullName || (m.isBye ? 'BYE' : '—'))
-                                : '____________________'}
+                              {m.ao?.fullName ? m.ao.fullName : '____________________'}
                             </div>
-                            {rIdx === 0 && m.ao?.dojoName && (
+                            {m.ao?.dojoName && (
                               <div className="text-[10px] text-slate-500 font-normal truncate">
                                 {m.ao.dojoName}
                               </div>
@@ -276,7 +270,7 @@ export default function BracketCard({ bracket, tournament }) {
               )}
             </div>
             <div className="text-[11px] text-slate-300 mt-0.5">
-              Tatami {bracket.tatami} • {isMultiPage ? `${bracket.totalAthletes} Atletas (Categoría Grande)` : bracket.bracketSize === 2 ? 'Gran Final Directa (2 Competidores)' : bracket.bracketSize === 4 ? '4 Posiciones (Semifinales y Final)' : `${bracket.bracketSize} posiciones oficiales`}
+              Tatami {bracket.tatami} • {isMultiPage ? `${bracket.totalAthletes} Atletas (Categoría Grande)` : bracket.bracketSize === 8 ? '8 posiciones oficiales (Cuartos, Semis y Final)' : `${bracket.bracketSize} posiciones oficiales`}
             </div>
           </div>
         </div>

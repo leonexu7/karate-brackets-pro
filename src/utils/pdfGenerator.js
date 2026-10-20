@@ -638,14 +638,9 @@ export function renderStandardBracketPage(doc, bracket, tournament, customBadge 
   const h = doc.internal.pageSize.getHeight();
 
   const is16 = bracket.bracketSize === 16;
-  let defaultBadge = 'Gráfica Oficial de 8 Posiciones';
-  if (bracket.bracketSize === 2) {
-    defaultBadge = 'Gran Final Directa — 2 Competidores';
-  } else if (bracket.bracketSize === 4) {
-    defaultBadge = 'Gráfica de 4 Posiciones (Semifinales y Final)';
-  } else if (bracket.bracketSize === 16) {
-    defaultBadge = 'Gráfica Oficial de 16 Posiciones';
-  }
+  const defaultBadge = is16
+    ? 'Gráfica Oficial de 16 Posiciones'
+    : 'Gráfica Oficial de 8 Posiciones (Cuartos, Semis y Final)';
   const pageBadge = customBadge || defaultBadge;
 
   drawHeader(doc, tournament, bracket.categoryName, bracket.tatami, pageBadge);
@@ -664,14 +659,6 @@ export function renderStandardBracketPage(doc, bracket, tournament, customBadge 
   const availableTreeWidth = podioX - 6 - startX; // ~181.4 mm
   let colWidth = availableTreeWidth / numRounds;
   let treeStartX = startX;
-
-  if (numRounds === 1) {
-    colWidth = 96;
-    treeStartX = startX + (availableTreeWidth - colWidth) / 2;
-  } else if (numRounds === 2) {
-    colWidth = 78;
-    treeStartX = startX + (availableTreeWidth - colWidth * 2) / 2;
-  }
 
   const startY = 38;
   const totalHeight = 146;
@@ -705,52 +692,50 @@ export function renderStandardBracketPage(doc, bracket, tournament, customBadge 
 
       // Marca visual AKA
       doc.setFillColor(...COLOR_AKA);
-      doc.rect(roundX + 3.5, lineY_aka - 3, 2.5, 3.5, 'F');
+      doc.rect(roundX + 3.5, lineY_aka - 3.5, 2.5, 4.5, 'F');
 
       // Texto AKA
-      doc.setFont('helvetica', roundIndex === 0 && match.aka ? 'bold' : 'normal');
+      doc.setFont('helvetica', match.aka ? 'bold' : 'normal');
       doc.setTextColor(...COLOR_DARK);
 
-      if (roundIndex === 0 && match.aka && !match.isBye) {
-        drawFitText(doc, match.aka.fullName || '—', roundX + 7.5, lineY_aka - 2.2, boxW - 16, 6.5, 4.8);
+      if (match.aka) {
+        drawFitText(doc, match.aka.fullName || '—', roundX + 7.5, lineY_aka - 2.5, boxW - 16, 6.2, 4.8);
         if (match.aka.dojoName) {
           doc.setFont('helvetica', 'normal');
           doc.setTextColor(...COLOR_MUTED);
-          drawFitText(doc, match.aka.dojoName, roundX + 7.5, lineY_aka - 0.5, boxW - 16, 5.0, 4.0);
+          drawFitText(doc, match.aka.dojoName, roundX + 7.5, lineY_aka - 0.7, boxW - 16, 4.8, 3.8);
         }
       } else {
-        const textAka = roundIndex === 0 ? (match.isBye ? 'BYE' : '—') : '___________________';
-        drawFitText(doc, textAka, roundX + 7.5, lineY_aka - 1, boxW - 16, 6.8, 5.2);
+        drawFitText(doc, '____________________', roundX + 7.5, lineY_aka - 1.0, boxW - 16, 6.5, 5.0);
       }
 
       // Casilla de puntos AKA [ ]
-      doc.rect(roundX + boxW - 7.5, lineY_aka - 4, 6.5, 5);
+      doc.rect(roundX + boxW - 7.5, lineY_aka - 4.5, 6.5, 5.5);
 
       // Línea AO
       doc.line(roundX + 8, lineY_ao, roundX + boxW - 8, lineY_ao);
 
       // Marca visual AO
       doc.setFillColor(...COLOR_AO);
-      doc.rect(roundX + 3.5, lineY_ao - 3, 2.5, 3.5, 'F');
+      doc.rect(roundX + 3.5, lineY_ao - 3.5, 2.5, 4.5, 'F');
 
       // Texto AO
-      doc.setFont('helvetica', roundIndex === 0 && match.ao ? 'bold' : 'normal');
+      doc.setFont('helvetica', match.ao ? 'bold' : 'normal');
       doc.setTextColor(...COLOR_DARK);
 
-      if (roundIndex === 0 && match.ao && !match.isBye) {
-        drawFitText(doc, match.ao.fullName || '—', roundX + 7.5, lineY_ao - 2.2, boxW - 16, 6.5, 4.8);
+      if (match.ao) {
+        drawFitText(doc, match.ao.fullName || '—', roundX + 7.5, lineY_ao - 2.5, boxW - 16, 6.2, 4.8);
         if (match.ao.dojoName) {
           doc.setFont('helvetica', 'normal');
           doc.setTextColor(...COLOR_MUTED);
-          drawFitText(doc, match.ao.dojoName, roundX + 7.5, lineY_ao - 0.5, boxW - 16, 5.0, 4.0);
+          drawFitText(doc, match.ao.dojoName, roundX + 7.5, lineY_ao - 0.7, boxW - 16, 4.8, 3.8);
         }
       } else {
-        const textAo = roundIndex === 0 ? (match.isBye ? 'BYE' : '—') : '___________________';
-        drawFitText(doc, textAo, roundX + 7.5, lineY_ao - 1, boxW - 16, 6.8, 5.2);
+        drawFitText(doc, '____________________', roundX + 7.5, lineY_ao - 1.0, boxW - 16, 6.5, 5.0);
       }
 
       // Casilla de puntos AO [ ]
-      doc.rect(roundX + boxW - 7.5, lineY_ao - 4, 6.5, 5);
+      doc.rect(roundX + boxW - 7.5, lineY_ao - 4.5, 6.5, 5.5);
 
       // Número de combate pequeño en el centro
       doc.setFont('helvetica', 'normal');
