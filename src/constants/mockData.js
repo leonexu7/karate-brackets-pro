@@ -10,6 +10,7 @@ export const INITIAL_TOURNAMENT = {
   feeDoubleModality: 300, // Costo de ficha oficial por 2 modalidades ($300 MXN)
   divideAdultsByWeight: false, // Por defecto en torneos chicos: Categoría abierta (Open) de peso en mayores
   allowMixedInfant: true, // Permitir categoría mixta en 6-7 años si faltan competidores
+  customLogo: null, // Logotipo personalizado opcional (reemplaza al escudo Shito-Kai en toda la app y PDFs)
 };
 
 // Iniciar con 0 dojos, 0 atletas y 0 equipos (totalmente limpio para registros reales)

@@ -94,7 +94,7 @@ export default function BracketCard({ bracket, tournament }) {
                 {rIdx === rounds.length - 1 && (
                   <div className="mt-6 border border-slate-200/90 rounded-2xl bg-gradient-to-b from-slate-50/80 via-white to-slate-50/60 p-4 text-center shadow-xs flex flex-col items-center justify-center">
                     <div className="w-8 h-8 rounded-full bg-rose-50 border border-rose-200 flex items-center justify-center mb-1.5 shadow-2xs">
-                      <ShitoKaiLogo className="w-5 h-5" />
+                      <ShitoKaiLogo src={tournament?.customLogo} className="w-5 h-5" />
                     </div>
                     <div className="relative my-1">
                       <img
@@ -259,7 +259,7 @@ export default function BracketCard({ bracket, tournament }) {
       {/* Cabecera de la Gráfica */}
       <div className="bg-slate-900 text-white px-5 py-3 border-b-2 border-rose-500 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <ShitoKaiLogo className="w-7 h-7" />
+          <ShitoKaiLogo src={tournament?.customLogo} className="w-7 h-7" />
           <div>
             <div className="flex items-center gap-2">
               <h3 className="font-semibold text-sm tracking-wide text-white">{bracket.categoryName}</h3>
@@ -369,7 +369,7 @@ export default function BracketCard({ bracket, tournament }) {
                 {/* Emblema Oficial de la Rama en el espacio central de cruces */}
                 <div className="border border-slate-200/90 rounded-2xl bg-gradient-to-b from-slate-50/80 via-white to-slate-50/60 p-4 text-center shadow-xs flex flex-col items-center justify-center max-w-sm mx-auto">
                   <div className="w-8 h-8 rounded-full bg-rose-50 border border-rose-200 flex items-center justify-center mb-1.5 shadow-2xs">
-                    <ShitoKaiLogo className="w-5 h-5" />
+                    <ShitoKaiLogo src={tournament?.customLogo} className="w-5 h-5" />
                   </div>
                   <div className="relative my-1">
                     <img

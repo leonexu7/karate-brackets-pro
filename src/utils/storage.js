@@ -39,6 +39,7 @@ export function loadTournamentState() {
       divideAdultsByWeight: parsed.tournament?.divideAdultsByWeight ?? false,
       allowMixedInfant: parsed.tournament?.allowMixedInfant ?? true,
       weightDivisions: parsed.tournament?.weightDivisions ?? null,
+      customLogo: parsed.tournament?.customLogo ?? null,
     };
 
     return {

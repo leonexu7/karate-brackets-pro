@@ -522,8 +522,8 @@ export default function App() {
       <footer className="bg-white border-t border-slate-200 py-3.5 px-4 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <ShitoKaiLogo className="w-5 h-5" />
-            <span className="font-semibold text-slate-700">Shito-Kai Karate-Do</span>
+            <ShitoKaiLogo src={state.tournament?.customLogo} className="w-5 h-5" />
+            <span className="font-semibold text-slate-700">{state.tournament?.organizer || 'Shito-Kai Karate-Do'}</span>
             <span>• Sistema Oficial de Competencia</span>
           </div>
           <div className="flex items-center gap-3">

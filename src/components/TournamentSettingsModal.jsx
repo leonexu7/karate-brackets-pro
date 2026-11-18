@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { X, Settings, Calendar, MapPin, Shield, RefreshCw, Key, Trash2, Coins, AlertTriangle, Download, Scale, Users, Plus, RotateCcw, Copy, Check } from 'lucide-react';
+import { X, Settings, Calendar, MapPin, Shield, RefreshCw, Key, Trash2, Coins, AlertTriangle, Download, Scale, Users, Plus, RotateCcw, Copy, Check, Upload, Image as ImageIcon } from 'lucide-react';
+import { ShitoKaiLogo } from '../assets/shitoKaiLogo';
 import { DEMO_ATHLETES, DEMO_DOJOS } from '../constants/mockData';
 import { DEFAULT_WEIGHT_DIVISIONS, PRESETS_2_WEIGHTS, PRESETS_3_WEIGHTS } from '../constants/categories';
 
@@ -23,6 +24,7 @@ export default function TournamentSettingsModal({
     feeDoubleModality: tournament.feeDoubleModality !== undefined ? tournament.feeDoubleModality : 300,
     divideAdultsByWeight: tournament.divideAdultsByWeight !== undefined ? tournament.divideAdultsByWeight : false,
     allowMixedInfant: tournament.allowMixedInfant !== undefined ? tournament.allowMixedInfant : true,
+    customLogo: tournament.customLogo || null,
   });
 
   const [activeAgeTab, setActiveAgeTab] = useState('senior'); // 'senior' | '16-17' | '14-15'
@@ -199,6 +201,54 @@ export default function TournamentSettingsModal({
     showTempFeedback('Pesos aplicados a todas las edades (Cadetes, Juniors y Adultos)');
   };
 
+  const handleLogoUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 8 * 1024 * 1024) {
+      alert('La imagen seleccionada supera los 8 MB. Por favor elige una imagen más ligera.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        // Redimensionar a máx 400x400 para mantener el localStorage ligero y optimizado
+        const maxDim = 400;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const base64Data = canvas.toDataURL('image/png');
+        setForm(prev => ({ ...prev, customLogo: base64Data }));
+        showTempFeedback('Logotipo personalizado cargado con éxito');
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleResetLogo = () => {
+    setForm(prev => ({ ...prev, customLogo: null }));
+    showTempFeedback('Restablecido al escudo Shito-Kai');
+  };
+
   const currentList = weightDivisions?.[activeAgeTab]?.[activeGender] || [];
 
   const handleSubmit = (e) => {
@@ -212,6 +262,7 @@ export default function TournamentSettingsModal({
       divideAdultsByWeight: Boolean(form.divideAdultsByWeight),
       allowMixedInfant: Boolean(form.allowMixedInfant),
       weightDivisions: weightDivisions,
+      customLogo: form.customLogo || null,
     });
     onClose();
   };
@@ -249,6 +300,78 @@ export default function TournamentSettingsModal({
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               className="w-full px-3 py-2 border border-tatami-300 rounded-md outline-hidden focus:ring-1 focus:ring-aka"
             />
+          </div>
+
+          {/* Logotipo Oficial del Torneo / Organización */}
+          <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <label className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                <ImageIcon className="w-3.5 h-3.5 text-rose-600" />
+                <span>Logotipo del Torneo / Organización</span>
+              </label>
+              <span className="text-[10px] text-slate-400 font-medium">Reemplaza el escudo en pantalla y PDFs</span>
+            </div>
+
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 bg-white p-2.5 rounded-lg border border-slate-200">
+              {/* Vista previa del logo actual */}
+              <div className="relative shrink-0">
+                <div className="w-14 h-14 rounded-full border-2 border-slate-200 overflow-hidden bg-slate-50 flex items-center justify-center shadow-2xs">
+                  {form.customLogo ? (
+                    <img
+                      src={form.customLogo}
+                      alt="Logotipo Personalizado"
+                      className="w-full h-full object-contain p-0.5"
+                    />
+                  ) : (
+                    <ShitoKaiLogo className="w-12 h-12" />
+                  )}
+                </div>
+                {form.customLogo && (
+                  <span className="absolute -bottom-0.5 -right-0.5 bg-emerald-500 text-white rounded-full p-0.5 shadow-xs" title="Logotipo personalizado activo">
+                    <Check className="w-2.5 h-2.5" />
+                  </span>
+                )}
+              </div>
+
+              {/* Botones para subir imagen o restablecer */}
+              <div className="space-y-1.5 flex-1 min-w-[200px]">
+                <div className="flex flex-wrap items-center gap-2">
+                  <label
+                    htmlFor="tournamentLogoUpload"
+                    className="px-3 py-1.5 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-2xs transition-colors"
+                  >
+                    <Upload className="w-3.5 h-3.5 text-rose-400" />
+                    <span>{form.customLogo ? 'Cambiar Imagen de Logo' : 'Subir Imagen de Logo'}</span>
+                  </label>
+                  <input
+                    id="tournamentLogoUpload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoUpload}
+                    className="hidden"
+                  />
+
+                  {form.customLogo && (
+                    <button
+                      type="button"
+                      onClick={handleResetLogo}
+                      className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-300 flex items-center gap-1 transition-colors cursor-pointer"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      <span>Restablecer Shito-Kai</span>
+                    </button>
+                  )}
+                </div>
+
+                <p className="text-[10px] text-slate-500">
+                  {form.customLogo ? (
+                    <span className="text-emerald-700 font-semibold">✓ Imagen personalizada activa (se usará en llaves, podio y hojas de impresión PDF).</span>
+                  ) : (
+                    <span>Se muestra actualmente el escudo oficial Shito-Kai. Puedes subir el logo de tu dojo o evento (.png, .jpg).</span>
+                  )}
+                </p>
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">

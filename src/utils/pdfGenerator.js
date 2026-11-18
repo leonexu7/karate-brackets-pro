@@ -20,14 +20,16 @@ const COLOR_MUTED = [100, 116, 139];  // Gris texto #64748B
 const COLOR_LINE = [148, 163, 184];   // Líneas de bracket nítidas #94A3B8
 const COLOR_HEADER_BG = [248, 250, 252];
 
-// Dibuja el escudo oficial de Shito-Kai en el PDF con la imagen oficial enviada por el usuario
-function drawShitoKaiLogoPDF(doc, x, y, size = 16) {
-  if (SHITOKAI_LOGO_BASE64) {
+// Dibuja el escudo oficial de Shito-Kai o el logotipo personalizado del torneo en el PDF
+function drawShitoKaiLogoPDF(doc, x, y, size = 16, customLogo = null) {
+  const logoData = customLogo || SHITOKAI_LOGO_BASE64;
+  if (logoData) {
     try {
-      doc.addImage(SHITOKAI_LOGO_BASE64, 'PNG', x, y, size, size, undefined, 'FAST');
+      const format = (logoData.startsWith('data:image/jpeg') || logoData.startsWith('data:image/jpg')) ? 'JPEG' : 'PNG';
+      doc.addImage(logoData, format, x, y, size, size, undefined, 'FAST');
       return;
     } catch (e) {
-      console.warn('Error adding ShitoKai logo image to PDF, using vector fallback:', e);
+      console.warn('Error adding logo image to PDF, using vector fallback:', e);
     }
   }
 
@@ -58,7 +60,7 @@ function drawShitoKaiLogoPDF(doc, x, y, size = 16) {
   doc.circle(cx, cy, 1.2, 'F');
 }
 
-// Dibuja el encabezado oficial con escudo Shito-Kai
+// Dibuja el encabezado oficial con escudo Shito-Kai o logotipo personalizado
 function drawHeader(doc, tournament, categoryName, tatami, pageBadge = '') {
   const w = doc.internal.pageSize.getWidth();
 
@@ -74,8 +76,8 @@ function drawHeader(doc, tournament, categoryName, tatami, pageBadge = '') {
   doc.setFillColor(...COLOR_AO);
   doc.rect(10 + (w - 20) / 2, 8, (w - 20) / 2, 1.5, 'F');
 
-  // Escudo oficial Shito-Kai (chico, discreto, superior izquierdo)
-  drawShitoKaiLogoPDF(doc, 14, 12, 15);
+  // Escudo oficial Shito-Kai o logotipo personalizado (chico, discreto, superior izquierdo)
+  drawShitoKaiLogoPDF(doc, 14, 12, 15, tournament?.customLogo);
 
   // Título de la Organización y Torneo
   doc.setTextColor(...COLOR_DARK);

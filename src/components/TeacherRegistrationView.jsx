@@ -536,8 +536,8 @@ export default function TeacherRegistrationView({
 
           <div className="p-5 sm:p-7 text-slate-800 relative z-10 max-w-xl space-y-3">
             <div className="flex items-center gap-3">
-              {/* Escudo rojo oficial Shito-Kai */}
-              <ShitoKaiLogo className="w-12 h-12 sm:w-14 sm:h-14 drop-shadow-sm shrink-0" />
+              {/* Escudo rojo oficial Shito-Kai o logotipo personalizado */}
+              <ShitoKaiLogo src={tournament?.customLogo} className="w-12 h-12 sm:w-14 sm:h-14 drop-shadow-sm shrink-0" />
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] font-bold tracking-wider text-rose-700 uppercase px-2 py-0.5 bg-rose-50 border border-rose-200 rounded-md">

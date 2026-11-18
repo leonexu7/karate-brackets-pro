@@ -47,7 +47,7 @@ export default function CuartetaCard({ cuarteta, tournament, onMatchWinner }) {
       {/* Cabecera de la Cuarteta con Shito-Kai */}
       <div className="bg-slate-900 text-white px-5 py-3 border-b-2 border-rose-500 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-3">
-          <ShitoKaiLogo className="w-6 h-6" />
+          <ShitoKaiLogo src={tournament?.customLogo} className="w-6 h-6" />
           <span className="w-5 h-5 rounded-full bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center">
             4
           </span>
