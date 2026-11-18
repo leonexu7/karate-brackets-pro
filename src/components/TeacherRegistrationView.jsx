@@ -145,9 +145,10 @@ export default function TeacherRegistrationView({
       return;
     }
     const ageDiv = findAgeDivision(age);
+    const isWeightEnabled = tournament?.divideAdultsByWeight ?? false;
     const weightNum = parseFloat(athleteForm.weight) || 0;
-    const weightDiv = ageDiv.hasWeightDivisions
-      ? findWeightDivision(ageDiv.id, athleteForm.gender, weightNum)
+    const weightDiv = (ageDiv.hasWeightDivisions && isWeightEnabled)
+      ? findWeightDivision(ageDiv.id, athleteForm.gender, weightNum, tournament?.weightDivisions)
       : null;
     const kyuInfo = getKyuInfo(athleteForm.beltId);
     const targetCatId = resolveCompetingCategory(athleteForm.beltId, athleteForm.competingCategory);
@@ -157,6 +158,7 @@ export default function TeacherRegistrationView({
       age,
       ageDiv,
       weightDiv,
+      isWeightEnabled,
       kyuInfo,
       categoryInfo,
       isCuarteta: ageDiv.format === 'cuarteta',
@@ -168,6 +170,8 @@ export default function TeacherRegistrationView({
     athleteForm.beltId,
     athleteForm.competingCategory,
     tournament.date,
+    tournament.divideAdultsByWeight,
+    tournament.weightDivisions,
   ]);
 
   // Manejar envío individual
@@ -1009,7 +1013,11 @@ export default function TeacherRegistrationView({
                     </div>
                   ) : suggestedInfo.ageDiv.hasWeightDivisions ? (
                     <div className="text-blue-900 bg-blue-50 p-2 rounded-lg border border-blue-200 text-[11px]">
-                      ⚖️ <strong>División WKF por Peso:</strong> {suggestedInfo.weightDiv?.name || 'Se requiere peso para división'} (Gráfica oficial de llaves).
+                      {suggestedInfo.isWeightEnabled ? (
+                        <>⚖️ <strong>División Oficial por Peso:</strong> {suggestedInfo.weightDiv?.name || 'Se requiere peso para división'} (Gráfica oficial).</>
+                      ) : (
+                        <>⚖️ <strong>Kumite Libre / Open:</strong> Categoría sin división de peso para este torneo.</>
+                      )}
                     </div>
                   ) : (
                     <div className="text-slate-700 bg-slate-100 p-2 rounded-lg text-[11px]">

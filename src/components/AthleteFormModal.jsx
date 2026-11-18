@@ -17,6 +17,7 @@ export default function AthleteFormModal({
   athleteToEdit,
   dojos,
   tournamentDate,
+  tournament,
 }) {
   const [formData, setFormData] = useState({
     fullName: '',
@@ -87,9 +88,10 @@ export default function AthleteFormModal({
     }
 
     const ageDiv = findAgeDivision(age);
+    const isWeightEnabled = tournament?.divideAdultsByWeight ?? false;
     const weightNum = parseFloat(formData.weight) || 0;
-    const weightDiv = ageDiv.hasWeightDivisions
-      ? findWeightDivision(ageDiv.id, formData.gender, weightNum)
+    const weightDiv = (ageDiv.hasWeightDivisions && isWeightEnabled)
+      ? findWeightDivision(ageDiv.id, formData.gender, weightNum, tournament?.weightDivisions)
       : null;
     const kyuInfo = getKyuInfo(formData.beltId);
     const targetCatId = resolveCompetingCategory(formData.beltId, formData.competingCategory);
@@ -99,11 +101,12 @@ export default function AthleteFormModal({
       age,
       ageDiv,
       weightDiv,
+      isWeightEnabled,
       kyuInfo,
       categoryInfo,
       isCuarteta: ageDiv.format === 'cuarteta',
     });
-  }, [formData.birthDate, formData.gender, formData.weight, formData.beltId, formData.competingCategory, tournamentDate]);
+  }, [formData.birthDate, formData.gender, formData.weight, formData.beltId, formData.competingCategory, tournamentDate, tournament]);
 
   if (!isOpen) return null;
 
@@ -391,7 +394,11 @@ export default function AthleteFormModal({
                 </div>
               ) : suggestedInfo.ageDiv.hasWeightDivisions ? (
                 <div className="text-blue-900 bg-blue-50 p-2 rounded-lg border border-blue-200 text-[11px]">
-                  ⚖️ <strong>División WKF por Peso:</strong> {suggestedInfo.weightDiv?.name || 'Requiere peso'} (Gráfica oficial).
+                  {suggestedInfo.isWeightEnabled ? (
+                    <>⚖️ <strong>División por Peso:</strong> {suggestedInfo.weightDiv?.name || 'Requiere peso'} (Gráfica oficial).</>
+                  ) : (
+                    <>⚖️ <strong>Kumite Open:</strong> Categoría libre de peso (sin división por peso en este torneo).</>
+                  )}
                 </div>
               ) : (
                 <div className="text-slate-700 bg-slate-100 p-2 rounded-lg text-[11px]">

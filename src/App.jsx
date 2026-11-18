@@ -149,8 +149,9 @@ export default function App() {
     return groupAthletesIntoCategories(state.athletes || [], state.tournament.date, dojosMap, {
       divideAdultsByWeight: state.tournament.divideAdultsByWeight ?? false,
       allowMixedInfant: state.tournament.allowMixedInfant ?? true,
+      weightDivisions: state.tournament.weightDivisions,
     });
-  }, [state.athletes, state.tournament.date, dojosMap, state.tournament.divideAdultsByWeight, state.tournament.allowMixedInfant]);
+  }, [state.athletes, state.tournament.date, dojosMap, state.tournament.divideAdultsByWeight, state.tournament.allowMixedInfant, state.tournament.weightDivisions]);
 
   // Generación automática de llaves
   const brackets = useMemo(() => {
@@ -559,6 +560,7 @@ export default function App() {
         athleteToEdit={athleteToEdit}
         dojos={state.dojos}
         tournamentDate={state.tournament.date}
+        tournament={state.tournament}
       />
 
       <BatchImportModal

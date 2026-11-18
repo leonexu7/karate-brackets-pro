@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { X, Settings, Calendar, MapPin, Shield, RefreshCw, Key, Trash2, Coins, AlertTriangle, Download, Scale, Users } from 'lucide-react';
+import { X, Settings, Calendar, MapPin, Shield, RefreshCw, Key, Trash2, Coins, AlertTriangle, Download, Scale, Users, Plus, RotateCcw, Copy, Check } from 'lucide-react';
 import { DEMO_ATHLETES, DEMO_DOJOS } from '../constants/mockData';
+import { DEFAULT_WEIGHT_DIVISIONS, PRESETS_2_WEIGHTS, PRESETS_3_WEIGHTS } from '../constants/categories';
 
 export default function TournamentSettingsModal({
   isOpen,
@@ -24,10 +25,181 @@ export default function TournamentSettingsModal({
     allowMixedInfant: tournament.allowMixedInfant !== undefined ? tournament.allowMixedInfant : true,
   });
 
+  const [activeAgeTab, setActiveAgeTab] = useState('senior'); // 'senior' | '16-17' | '14-15'
+  const [activeGender, setActiveGender] = useState('M'); // 'M' | 'F'
+  const [weightDivisions, setWeightDivisions] = useState(() => {
+    return tournament.weightDivisions
+      ? JSON.parse(JSON.stringify(tournament.weightDivisions))
+      : JSON.parse(JSON.stringify(DEFAULT_WEIGHT_DIVISIONS));
+  });
+  const [actionFeedback, setActionFeedback] = useState('');
+
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [confirmText, setConfirmText] = useState('');
 
   if (!isOpen) return null;
+
+  const showTempFeedback = (msg) => {
+    setActionFeedback(msg);
+    setTimeout(() => setActionFeedback(''), 2500);
+  };
+
+  const handleUpdateWeightDivision = (index, field, value) => {
+    setWeightDivisions(prev => {
+      const next = JSON.parse(JSON.stringify(prev || DEFAULT_WEIGHT_DIVISIONS));
+      const targetAgeKeys = activeAgeTab === 'senior' ? ['senior', '18-20'] : [activeAgeTab];
+
+      targetAgeKeys.forEach(ageKey => {
+        if (!next[ageKey]) next[ageKey] = { M: [], F: [] };
+        if (!next[ageKey][activeGender]) next[ageKey][activeGender] = [];
+        if (next[ageKey][activeGender][index]) {
+          next[ageKey][activeGender][index][field] = value;
+
+          // Sugerir nombre automático al cambiar los valores de peso
+          if (field === 'max' && value !== null && value !== '' && !isNaN(value)) {
+            const num = parseFloat(value);
+            const oldName = next[ageKey][activeGender][index].name || '';
+            if (oldName.startsWith('-') || oldName.endsWith('kg') || oldName === '') {
+              next[ageKey][activeGender][index].name = `-${num} kg`;
+            }
+          } else if (field === 'min' && (next[ageKey][activeGender][index].max === null || next[ageKey][activeGender][index].max === '') && value !== null && value !== '' && !isNaN(value)) {
+            const num = parseFloat(value);
+            const oldName = next[ageKey][activeGender][index].name || '';
+            if (oldName.startsWith('+') || oldName.endsWith('kg') || oldName === '') {
+              next[ageKey][activeGender][index].name = `+${Math.floor(num)} kg`;
+            }
+          }
+        }
+      });
+      return next;
+    });
+  };
+
+  const handleAddWeightDivision = () => {
+    setWeightDivisions(prev => {
+      const next = JSON.parse(JSON.stringify(prev || DEFAULT_WEIGHT_DIVISIONS));
+      const targetAgeKeys = activeAgeTab === 'senior' ? ['senior', '18-20'] : [activeAgeTab];
+
+      targetAgeKeys.forEach(ageKey => {
+        if (!next[ageKey]) next[ageKey] = { M: [], F: [] };
+        if (!next[ageKey][activeGender]) next[ageKey][activeGender] = [];
+
+        const list = next[ageKey][activeGender];
+        const lastItem = list[list.length - 1];
+        let newMin = null;
+        let newMax = 80;
+        let newName = '-80 kg';
+
+        if (lastItem) {
+          if (lastItem.max) {
+            newMin = parseFloat(lastItem.max) + 0.01;
+            newMax = Math.round(parseFloat(lastItem.max) + 8);
+            newName = `-${newMax} kg`;
+          } else if (lastItem.min) {
+            newMin = parseFloat(lastItem.min) + 5;
+            newMax = Math.round(newMin + 7);
+            newName = `-${newMax} kg`;
+          }
+        }
+
+        const newId = `custom-${ageKey}-${activeGender.toLowerCase()}-${Date.now()}`;
+        list.push({
+          id: newId,
+          name: newName,
+          min: newMin,
+          max: newMax,
+        });
+      });
+      return next;
+    });
+    showTempFeedback('Categoría de peso añadida');
+  };
+
+  const handleDeleteWeightDivision = (index) => {
+    setWeightDivisions(prev => {
+      const next = JSON.parse(JSON.stringify(prev || DEFAULT_WEIGHT_DIVISIONS));
+      const targetAgeKeys = activeAgeTab === 'senior' ? ['senior', '18-20'] : [activeAgeTab];
+      targetAgeKeys.forEach(ageKey => {
+        if (next[ageKey]?.[activeGender] && next[ageKey][activeGender].length > 1) {
+          next[ageKey][activeGender].splice(index, 1);
+        }
+      });
+      return next;
+    });
+    showTempFeedback('Categoría de peso eliminada');
+  };
+
+  const handleResetToWKF = () => {
+    setWeightDivisions(prev => {
+      const next = JSON.parse(JSON.stringify(prev || DEFAULT_WEIGHT_DIVISIONS));
+      const defaultData = JSON.parse(JSON.stringify(DEFAULT_WEIGHT_DIVISIONS));
+      const targetAgeKeys = activeAgeTab === 'senior' ? ['senior', '18-20'] : [activeAgeTab];
+      targetAgeKeys.forEach(ageKey => {
+        if (!next[ageKey]) next[ageKey] = { M: [], F: [] };
+        next[ageKey][activeGender] = JSON.parse(JSON.stringify(defaultData[ageKey][activeGender]));
+      });
+      return next;
+    });
+    showTempFeedback('Restablecido a pesos oficiales WKF');
+  };
+
+  const handleApply2WeightsPreset = () => {
+    setWeightDivisions(prev => {
+      const next = JSON.parse(JSON.stringify(prev || DEFAULT_WEIGHT_DIVISIONS));
+      const targetAgeKeys = activeAgeTab === 'senior' ? ['senior', '18-20'] : [activeAgeTab];
+      targetAgeKeys.forEach(ageKey => {
+        if (!next[ageKey]) next[ageKey] = { M: [], F: [] };
+        next[ageKey][activeGender] = JSON.parse(JSON.stringify(PRESETS_2_WEIGHTS[activeGender]));
+      });
+      return next;
+    });
+    showTempFeedback('Preset de 2 pesos aplicado');
+  };
+
+  const handleApply3WeightsPreset = () => {
+    setWeightDivisions(prev => {
+      const next = JSON.parse(JSON.stringify(prev || DEFAULT_WEIGHT_DIVISIONS));
+      const targetAgeKeys = activeAgeTab === 'senior' ? ['senior', '18-20'] : [activeAgeTab];
+      targetAgeKeys.forEach(ageKey => {
+        if (!next[ageKey]) next[ageKey] = { M: [], F: [] };
+        next[ageKey][activeGender] = JSON.parse(JSON.stringify(PRESETS_3_WEIGHTS[activeGender]));
+      });
+      return next;
+    });
+    showTempFeedback('Preset de 3 pesos aplicado');
+  };
+
+  const handleCopyWeightsToOtherGender = () => {
+    const targetGender = activeGender === 'M' ? 'F' : 'M';
+    setWeightDivisions(prev => {
+      const next = JSON.parse(JSON.stringify(prev || DEFAULT_WEIGHT_DIVISIONS));
+      const source = next[activeAgeTab]?.[activeGender] || [];
+      const targetAgeKeys = activeAgeTab === 'senior' ? ['senior', '18-20'] : [activeAgeTab];
+      targetAgeKeys.forEach(ageKey => {
+        if (!next[ageKey]) next[ageKey] = { M: [], F: [] };
+        next[ageKey][targetGender] = JSON.parse(JSON.stringify(source));
+      });
+      return next;
+    });
+    showTempFeedback(`Pesos copiados a Rama ${targetGender === 'M' ? 'Varonil' : 'Femenil'}`);
+  };
+
+  const handleCopyWeightsToAllAges = () => {
+    setWeightDivisions(prev => {
+      const next = JSON.parse(JSON.stringify(prev || DEFAULT_WEIGHT_DIVISIONS));
+      const sourceM = next[activeAgeTab]?.M || [];
+      const sourceF = next[activeAgeTab]?.F || [];
+      ['14-15', '16-17', '18-20', 'senior'].forEach(ageKey => {
+        if (!next[ageKey]) next[ageKey] = { M: [], F: [] };
+        next[ageKey].M = JSON.parse(JSON.stringify(sourceM));
+        next[ageKey].F = JSON.parse(JSON.stringify(sourceF));
+      });
+      return next;
+    });
+    showTempFeedback('Pesos aplicados a todas las edades (Cadetes, Juniors y Adultos)');
+  };
+
+  const currentList = weightDivisions?.[activeAgeTab]?.[activeGender] || [];
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -39,6 +211,7 @@ export default function TournamentSettingsModal({
       feeDoubleModality: parseFloat(form.feeDoubleModality) || 0,
       divideAdultsByWeight: Boolean(form.divideAdultsByWeight),
       allowMixedInfant: Boolean(form.allowMixedInfant),
+      weightDivisions: weightDivisions,
     });
     onClose();
   };
@@ -55,13 +228,13 @@ export default function TournamentSettingsModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 overflow-y-auto">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[92vh] flex flex-col overflow-hidden border border-tatami-200">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden border border-tatami-200">
         <div className="bg-tatami-900 text-white px-5 py-3.5 flex items-center justify-between border-b-2 border-aka shrink-0">
           <div className="flex items-center gap-2">
             <Settings className="w-5 h-5 text-aka-light" />
             <h2 className="text-sm font-semibold">Configuración del Torneo (Solo Administrador)</h2>
           </div>
-          <button onClick={onClose} className="text-tatami-400 hover:text-white">
+          <button onClick={onClose} className="text-tatami-400 hover:text-white cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -134,7 +307,7 @@ export default function TournamentSettingsModal({
           </div>
 
           {/* División por Peso en Mayores (Kumite >= 14 años) */}
-          <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
             <div className="flex items-start justify-between gap-3">
               <div className="space-y-1">
                 <label className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
@@ -143,7 +316,7 @@ export default function TournamentSettingsModal({
                 </label>
                 <p className="text-[11px] text-slate-600">
                   {form.divideAdultsByWeight
-                    ? 'Activado: Divide estrictamente en categorías de peso (-52kg, -57kg, etc.). Útil en torneos estatales masivos.'
+                    ? 'Activado: Divide estrictamente en categorías de peso. Abajo puedes desglosar y editar los pesos a tu gusto.'
                     : 'Desactivado: Categoría Abierta / Open (Recomendado para torneos chicos para que nadie se quede solo en un peso vacío).'}
                 </p>
                 <span className="text-[10px] text-slate-400 block italic">
@@ -165,6 +338,220 @@ export default function TournamentSettingsModal({
                 />
               </button>
             </div>
+
+            {/* SECCIÓN DESGLOSADA DE PESOS CONFIGURABLES (CUANDO ESTÁ ACTIVADO) */}
+            {form.divideAdultsByWeight && (
+              <div className="mt-3 pt-3 border-t border-slate-200 space-y-3 animate-in fade-in duration-150">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-bold text-slate-900 text-xs">
+                      Desglose de Opciones de Peso:
+                    </span>
+                    <span className="text-[10px] bg-rose-100 text-rose-800 font-semibold px-2 py-0.5 rounded-full">
+                      Editable en tiempo real
+                    </span>
+                  </div>
+                  {actionFeedback && (
+                    <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1 animate-pulse">
+                      <Check className="w-3 h-3 text-emerald-600" />
+                      {actionFeedback}
+                    </span>
+                  )}
+                </div>
+
+                {/* Pestañas de Grupo de Edad */}
+                <div className="flex items-center gap-1 bg-slate-200/80 p-1 rounded-lg text-xs font-semibold">
+                  <button
+                    type="button"
+                    onClick={() => setActiveAgeTab('senior')}
+                    className={`flex-1 py-1.5 px-2 rounded-md text-center transition-colors cursor-pointer ${
+                      activeAgeTab === 'senior' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Adultos / Senior (≥18)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveAgeTab('16-17')}
+                    className={`flex-1 py-1.5 px-2 rounded-md text-center transition-colors cursor-pointer ${
+                      activeAgeTab === '16-17' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Junior (16-17)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveAgeTab('14-15')}
+                    className={`flex-1 py-1.5 px-2 rounded-md text-center transition-colors cursor-pointer ${
+                      activeAgeTab === '14-15' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Cadetes (14-15)
+                  </button>
+                </div>
+
+                {/* Selector de Rama y Presets Rápidos */}
+                <div className="flex flex-wrap items-center justify-between gap-2 bg-white p-2.5 rounded-xl border border-slate-200">
+                  <div className="inline-flex rounded-lg border border-slate-300 bg-slate-100 p-0.5 text-xs font-semibold">
+                    <button
+                      type="button"
+                      onClick={() => setActiveGender('M')}
+                      className={`px-3 py-1 rounded-md transition-colors cursor-pointer ${
+                        activeGender === 'M' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-700 hover:bg-slate-200'
+                      }`}
+                    >
+                      🥋 Varonil (M)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveGender('F')}
+                      className={`px-3 py-1 rounded-md transition-colors cursor-pointer ${
+                        activeGender === 'F' ? 'bg-rose-600 text-white shadow-xs' : 'text-slate-700 hover:bg-slate-200'
+                      }`}
+                    >
+                      🥋 Femenil (F)
+                    </button>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                    <span className="text-[10px] text-slate-400 font-semibold mr-0.5">Presets:</span>
+                    <button
+                      type="button"
+                      onClick={handleResetToWKF}
+                      className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-md font-semibold border border-slate-300 transition-colors cursor-pointer"
+                      title="Restablece los pesos estándar oficiales de la WKF"
+                    >
+                      WKF Oficial
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleApply2WeightsPreset}
+                      className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-md font-semibold border border-slate-300 transition-colors cursor-pointer"
+                      title="Configura 2 pesos (Ligero / Pesado)"
+                    >
+                      2 Pesos
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleApply3WeightsPreset}
+                      className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-md font-semibold border border-slate-300 transition-colors cursor-pointer"
+                      title="Configura 3 pesos (Ligero / Medio / Pesado)"
+                    >
+                      3 Pesos
+                    </button>
+                  </div>
+                </div>
+
+                {/* Lista de Rangos de Peso Desglosados */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-[11px] font-semibold text-slate-700 px-1">
+                    <span>Categorías para {activeAgeTab === 'senior' ? 'Adultos / Senior' : activeAgeTab === '16-17' ? 'Junior' : 'Cadetes'} ({activeGender === 'M' ? 'Varonil' : 'Femenil'}):</span>
+                    <span className="text-[10px] text-slate-400 font-normal">Modifica nombres y pesos en kg</span>
+                  </div>
+
+                  <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+                    {currentList.map((div, idx) => {
+                      return (
+                        <div
+                          key={div.id || idx}
+                          className="bg-white border border-slate-200 rounded-xl p-2.5 flex flex-wrap sm:flex-nowrap items-center gap-2.5 shadow-2xs hover:border-slate-300 transition-colors"
+                        >
+                          {/* Badge de Orden */}
+                          <span className="w-5 h-5 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-600 shrink-0">
+                            {idx + 1}
+                          </span>
+
+                          {/* Nombre de la Categoría */}
+                          <div className="w-24 sm:w-28 shrink-0">
+                            <input
+                              type="text"
+                              value={div.name}
+                              onChange={(e) => handleUpdateWeightDivision(idx, 'name', e.target.value)}
+                              className="w-full px-2 py-1 text-xs font-bold text-slate-900 border border-slate-300 rounded-md bg-slate-50 focus:bg-white focus:border-rose-500 outline-hidden"
+                              placeholder="-60 kg"
+                              title="Nombre visible de la categoría"
+                            />
+                          </div>
+
+                          {/* Rango Min y Max en kg */}
+                          <div className="flex items-center gap-1.5 flex-1 min-w-[150px] text-[11px] text-slate-600">
+                            <span className="text-[10px] text-slate-400 shrink-0">Mín:</span>
+                            <input
+                              type="number"
+                              step="0.1"
+                              value={div.min ?? ''}
+                              onChange={(e) => handleUpdateWeightDivision(idx, 'min', e.target.value === '' ? null : parseFloat(e.target.value))}
+                              placeholder="0"
+                              className="w-14 px-1.5 py-1 text-xs font-mono text-center border border-slate-300 rounded-md bg-white focus:border-rose-500 outline-hidden"
+                              title="Peso mínimo en kg (dejar vacío si es desde 0)"
+                            />
+                            <span className="text-[10px] text-slate-400 shrink-0">a</span>
+                            <input
+                              type="number"
+                              step="0.1"
+                              value={div.max ?? ''}
+                              onChange={(e) => handleUpdateWeightDivision(idx, 'max', e.target.value === '' ? null : parseFloat(e.target.value))}
+                              placeholder="Máx"
+                              className="w-14 px-1.5 py-1 text-xs font-mono text-center border border-slate-300 rounded-md bg-white focus:border-rose-500 outline-hidden"
+                              title="Peso máximo en kg (dejar vacío para categoría pesada '+')"
+                            />
+                            <span className="text-[11px] font-semibold text-slate-500">kg</span>
+                          </div>
+
+                          {/* Rótulo explicativo */}
+                          <div className="text-[10px] text-slate-500 italic hidden sm:block shrink-0 min-w-[95px] text-right">
+                            {!div.min && div.max ? `Hasta ${div.max} kg` :
+                             div.min && div.max ? `${div.min} a ${div.max} kg` :
+                             div.min && !div.max ? `Más de ${Math.floor(div.min)} kg` : 'Cualquier peso'}
+                          </div>
+
+                          {/* Botón Borrar */}
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteWeightDivision(idx)}
+                            disabled={currentList.length <= 1}
+                            className="p-1 text-slate-400 hover:text-rose-600 disabled:opacity-30 disabled:hover:text-slate-400 rounded transition-colors shrink-0 cursor-pointer"
+                            title={currentList.length <= 1 ? "Debe haber al menos 1 división" : "Eliminar esta categoría de peso"}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Acciones de la lista */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-200">
+                    <button
+                      type="button"
+                      onClick={handleAddWeightDivision}
+                      className="px-3 py-1.5 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Agregar Categoría de Peso</span>
+                    </button>
+
+                    <div className="flex items-center gap-2 text-[11px]">
+                      <button
+                        type="button"
+                        onClick={handleCopyWeightsToOtherGender}
+                        className="text-slate-600 hover:text-slate-900 font-medium underline cursor-pointer"
+                      >
+                        Copiar a {activeGender === 'M' ? 'Femenil' : 'Varonil'}
+                      </button>
+                      <span className="text-slate-300">•</span>
+                      <button
+                        type="button"
+                        onClick={handleCopyWeightsToAllAges}
+                        className="text-slate-600 hover:text-slate-900 font-medium underline cursor-pointer"
+                      >
+                        Copiar a todas las edades
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Fusión Mixta en 6-7 años */}

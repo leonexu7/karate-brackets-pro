@@ -12,72 +12,96 @@ export const AGE_DIVISIONS = [
   { id: 'masters45', name: 'Master (+45 años)', minAge: 45, maxAge: 99, format: 'bracket_16', hasWeightDivisions: false },
 ];
 
-export const WEIGHT_DIVISIONS = {
+export const DEFAULT_WEIGHT_DIVISIONS = {
   '14-15': {
     M: [
-      { id: 'm-14-15-52', name: '-52 kg', max: 52 },
+      { id: 'm-14-15-52', name: '-52 kg', min: null, max: 52 },
       { id: 'm-14-15-57', name: '-57 kg', min: 52.01, max: 57 },
       { id: 'm-14-15-63', name: '-63 kg', min: 57.01, max: 63 },
       { id: 'm-14-15-70', name: '-70 kg', min: 63.01, max: 70 },
-      { id: 'm-14-15-p70', name: '+70 kg', min: 70.01 },
+      { id: 'm-14-15-p70', name: '+70 kg', min: 70.01, max: null },
     ],
     F: [
-      { id: 'f-14-15-47', name: '-47 kg', max: 47 },
+      { id: 'f-14-15-47', name: '-47 kg', min: null, max: 47 },
       { id: 'f-14-15-54', name: '-54 kg', min: 47.01, max: 54 },
       { id: 'f-14-15-61', name: '-61 kg', min: 54.01, max: 61 },
-      { id: 'f-14-15-p61', name: '+61 kg', min: 61.01 },
+      { id: 'f-14-15-p61', name: '+61 kg', min: 61.01, max: null },
     ],
   },
   '16-17': {
     M: [
-      { id: 'm-16-17-55', name: '-55 kg', max: 55 },
+      { id: 'm-16-17-55', name: '-55 kg', min: null, max: 55 },
       { id: 'm-16-17-61', name: '-61 kg', min: 55.01, max: 61 },
       { id: 'm-16-17-68', name: '-68 kg', min: 61.01, max: 68 },
       { id: 'm-16-17-76', name: '-76 kg', min: 68.01, max: 76 },
-      { id: 'm-16-17-p76', name: '+76 kg', min: 76.01 },
+      { id: 'm-16-17-p76', name: '+76 kg', min: 76.01, max: null },
     ],
     F: [
-      { id: 'f-16-17-48', name: '-48 kg', max: 48 },
+      { id: 'f-16-17-48', name: '-48 kg', min: null, max: 48 },
       { id: 'f-16-17-53', name: '-53 kg', min: 48.01, max: 53 },
       { id: 'f-16-17-59', name: '-59 kg', min: 53.01, max: 59 },
       { id: 'f-16-17-66', name: '-66 kg', min: 59.01, max: 66 },
-      { id: 'f-16-17-p66', name: '+66 kg', min: 66.01 },
+      { id: 'f-16-17-p66', name: '+66 kg', min: 66.01, max: null },
     ],
   },
   '18-20': {
     M: [
-      { id: 'm-u21-60', name: '-60 kg', max: 60 },
+      { id: 'm-u21-60', name: '-60 kg', min: null, max: 60 },
       { id: 'm-u21-67', name: '-67 kg', min: 60.01, max: 67 },
       { id: 'm-u21-75', name: '-75 kg', min: 67.01, max: 75 },
       { id: 'm-u21-84', name: '-84 kg', min: 75.01, max: 84 },
-      { id: 'm-u21-p84', name: '+84 kg', min: 84.01 },
+      { id: 'm-u21-p84', name: '+84 kg', min: 84.01, max: null },
     ],
     F: [
-      { id: 'f-u21-50', name: '-50 kg', max: 50 },
+      { id: 'f-u21-50', name: '-50 kg', min: null, max: 50 },
       { id: 'f-u21-55', name: '-55 kg', min: 50.01, max: 55 },
       { id: 'f-u21-61', name: '-61 kg', min: 55.01, max: 61 },
       { id: 'f-u21-68', name: '-68 kg', min: 61.01, max: 68 },
-      { id: 'f-u21-p68', name: '+68 kg', min: 68.01 },
+      { id: 'f-u21-p68', name: '+68 kg', min: 68.01, max: null },
     ],
   },
   'senior': {
     M: [
-      { id: 'm-sen-60', name: '-60 kg', max: 60 },
+      { id: 'm-sen-60', name: '-60 kg', min: null, max: 60 },
       { id: 'm-sen-67', name: '-67 kg', min: 60.01, max: 67 },
       { id: 'm-sen-75', name: '-75 kg', min: 67.01, max: 75 },
       { id: 'm-sen-84', name: '-84 kg', min: 75.01, max: 84 },
-      { id: 'm-sen-p84', name: '+84 kg', min: 84.01 },
-      { id: 'm-sen-open', name: 'Open (Libre)', isDefault: true },
+      { id: 'm-sen-p84', name: '+84 kg', min: 84.01, max: null },
     ],
     F: [
-      { id: 'f-sen-50', name: '-50 kg', max: 50 },
+      { id: 'f-sen-50', name: '-50 kg', min: null, max: 50 },
       { id: 'f-sen-55', name: '-55 kg', min: 50.01, max: 55 },
       { id: 'f-sen-61', name: '-61 kg', min: 55.01, max: 61 },
       { id: 'f-sen-68', name: '-68 kg', min: 61.01, max: 68 },
-      { id: 'f-sen-p68', name: '+68 kg', min: 68.01 },
-      { id: 'f-sen-open', name: 'Open (Libre)', isDefault: true },
+      { id: 'f-sen-p68', name: '+68 kg', min: 68.01, max: null },
     ],
   }
+};
+
+export const WEIGHT_DIVISIONS = DEFAULT_WEIGHT_DIVISIONS;
+
+export const PRESETS_2_WEIGHTS = {
+  M: [
+    { id: 'm-ligero', name: '-75 kg', min: null, max: 75 },
+    { id: 'm-pesado', name: '+75 kg', min: 75.01, max: null },
+  ],
+  F: [
+    { id: 'f-ligero', name: '-60 kg', min: null, max: 60 },
+    { id: 'f-pesado', name: '+60 kg', min: 60.01, max: null },
+  ],
+};
+
+export const PRESETS_3_WEIGHTS = {
+  M: [
+    { id: 'm-ligero', name: '-67 kg', min: null, max: 67 },
+    { id: 'm-medio', name: '-80 kg', min: 67.01, max: 80 },
+    { id: 'm-pesado', name: '+80 kg', min: 80.01, max: null },
+  ],
+  F: [
+    { id: 'f-ligero', name: '-55 kg', min: null, max: 55 },
+    { id: 'f-medio', name: '-65 kg', min: 55.01, max: 65 },
+    { id: 'f-pesado', name: '+65 kg', min: 65.01, max: null },
+  ],
 };
 
 export const MODALITIES = [
@@ -108,22 +132,49 @@ export function findAgeDivision(age) {
   return div || AGE_DIVISIONS[AGE_DIVISIONS.length - 1];
 }
 
-export function findWeightDivision(ageDivisionId, gender, weight) {
+export function findWeightDivision(ageDivisionId, gender, weight, customWeightDivisions = null) {
   const ageKey = ageDivisionId === '14-15' ? '14-15' :
                  ageDivisionId === '16-17' ? '16-17' :
                  ageDivisionId === '18-20' ? '18-20' :
                  ageDivisionId === 'senior' ? 'senior' : null;
 
-  if (!ageKey || !WEIGHT_DIVISIONS[ageKey]) return null;
-  const list = WEIGHT_DIVISIONS[ageKey][gender === 'F' ? 'F' : 'M'] || [];
-  if (!weight || weight <= 0) {
+  const source = (customWeightDivisions && customWeightDivisions[ageKey])
+    ? customWeightDivisions
+    : (WEIGHT_DIVISIONS || DEFAULT_WEIGHT_DIVISIONS);
+
+  if (!ageKey || !source[ageKey]) return null;
+  const list = source[ageKey][gender === 'F' ? 'F' : 'M'] || [];
+  if (list.length === 0) return null;
+
+  const wNum = parseFloat(weight);
+  if (!wNum || isNaN(wNum) || wNum <= 0) {
     return list.find(w => w.isDefault) || list[0] || null;
   }
 
+  // 1. Coincidencia estricta por rangos definidos
   for (const div of list) {
-    if (div.max && !div.min && weight <= div.max) return div;
-    if (div.min && div.max && weight >= div.min && weight <= div.max) return div;
-    if (div.min && !div.max && weight >= div.min) return div;
+    const min = div.min !== null && div.min !== undefined && div.min !== '' ? parseFloat(div.min) : null;
+    const max = div.max !== null && div.max !== undefined && div.max !== '' ? parseFloat(div.max) : null;
+
+    if (max !== null && (min === null || min === 0)) {
+      if (wNum <= max) return div;
+    } else if (min !== null && max !== null) {
+      if (wNum > (min - 0.05) && wNum <= (max + 0.05)) return div;
+    } else if (min !== null && (max === null || max === 0)) {
+      if (wNum >= (min - 0.05)) return div;
+    }
   }
+
+  // 2. Coincidencia secuencial ordenada por peso máximo
+  const withMax = list.filter(d => d.max !== null && d.max !== undefined && d.max !== '' && parseFloat(d.max) > 0);
+  withMax.sort((a, b) => parseFloat(a.max) - parseFloat(b.max));
+  for (const div of withMax) {
+    if (wNum <= parseFloat(div.max)) return div;
+  }
+
+  // 3. Categoría de peso libre / pesados (+)
+  const plusDiv = list.find(d => !d.max || parseFloat(d.max) === 0);
+  if (plusDiv) return plusDiv;
+
   return list[list.length - 1] || null;
 }

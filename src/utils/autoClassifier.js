@@ -24,14 +24,15 @@ export function classifyAthlete(athlete, tournamentDate, modalityId = 'kumite_in
   const divideAdultsByWeight = options.divideAdultsByWeight ?? false;
   let weightDivision = null;
   if (ageDivision.hasWeightDivisions && modalityId.includes('kumite') && divideAdultsByWeight) {
-    weightDivision = findWeightDivision(ageDivision.id, gender, athlete.weight);
+    weightDivision = findWeightDivision(ageDivision.id, gender, athlete.weight, options.weightDivisions);
   }
 
   let categoryKey = `${modalityId}_${ageDivision.id}_${gender}_${competingCat.id}`;
   let categoryName = `${modalityId.includes('kata') ? 'Kata' : 'Kumite'} ${ageDivision.name} ${genderLabel} • ${competingCat.name}`;
 
   if (weightDivision) {
-    categoryKey += `_${weightDivision.id}`;
+    const sanitizedId = weightDivision.id || weightDivision.name.replace(/[^a-zA-Z0-9]/g, '_');
+    categoryKey += `_${sanitizedId}`;
     categoryName += ` (${weightDivision.name})`;
   } else if (ageDivision.hasWeightDivisions && modalityId.includes('kumite') && !divideAdultsByWeight) {
     // Modo Open / Libre de peso para torneos chicos (evita atletas solos en pesos desiertos)
