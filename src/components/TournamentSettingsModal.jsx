@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { X, Settings, Calendar, MapPin, Shield, RefreshCw, Key, Trash2, Coins, AlertTriangle, Download, Scale, Users, Plus, RotateCcw, Copy, Check, Upload, Image as ImageIcon } from 'lucide-react';
+import { X, Settings, Calendar, MapPin, Shield, RefreshCw, Key, Trash2, Coins, AlertTriangle, Download, Scale, Users, Plus, RotateCcw, Copy, Check, Upload, Image as ImageIcon, Sliders, Palette } from 'lucide-react';
 import { ShitoKaiLogo } from '../assets/shitoKaiLogo';
+import sakuraTreeImg from '../assets/sakura_tree.png';
 import { DEMO_ATHLETES, DEMO_DOJOS } from '../constants/mockData';
 import { DEFAULT_WEIGHT_DIVISIONS, PRESETS_2_WEIGHTS, PRESETS_3_WEIGHTS } from '../constants/categories';
 
@@ -25,6 +26,9 @@ export default function TournamentSettingsModal({
     divideAdultsByWeight: tournament.divideAdultsByWeight !== undefined ? tournament.divideAdultsByWeight : false,
     allowMixedInfant: tournament.allowMixedInfant !== undefined ? tournament.allowMixedInfant : true,
     customLogo: tournament.customLogo || null,
+    customBg: tournament.customBg || null,
+    bgOpacity: tournament.bgOpacity !== undefined ? tournament.bgOpacity : 0.20,
+    bgFit: tournament.bgFit || 'contain',
   });
 
   const [activeAgeTab, setActiveAgeTab] = useState('senior'); // 'senior' | '16-17' | '14-15'
@@ -249,6 +253,65 @@ export default function TournamentSettingsModal({
     showTempFeedback('Restablecido al escudo Shito-Kai');
   };
 
+  const handleBackgroundUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 15 * 1024 * 1024) {
+      alert('La imagen seleccionada supera los 15 MB. Por favor elige una imagen más ligera.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        // Redimensionar para mantener localStorage ligero y rápido (< 250 KB)
+        const maxDim = 1280;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const isPng = file.type === 'image/png';
+        const base64Data = isPng ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg', 0.82);
+
+        setForm(prev => ({
+          ...prev,
+          customBg: base64Data,
+          bgFit: prev.bgFit || 'cover',
+        }));
+        showTempFeedback('Fondo personalizado cargado con éxito');
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleResetBackground = () => {
+    setForm(prev => ({
+      ...prev,
+      customBg: null,
+      bgOpacity: 0.20,
+      bgFit: 'contain',
+    }));
+    showTempFeedback('Restablecido al fondo predeterminado (Cerezo Sakura)');
+  };
+
   const currentList = weightDivisions?.[activeAgeTab]?.[activeGender] || [];
 
   const handleSubmit = (e) => {
@@ -263,6 +326,9 @@ export default function TournamentSettingsModal({
       allowMixedInfant: Boolean(form.allowMixedInfant),
       weightDivisions: weightDivisions,
       customLogo: form.customLogo || null,
+      customBg: form.customBg || null,
+      bgOpacity: form.bgOpacity !== undefined ? parseFloat(form.bgOpacity) : 0.20,
+      bgFit: form.bgFit || 'contain',
     });
     onClose();
   };
@@ -370,6 +436,160 @@ export default function TournamentSettingsModal({
                     <span>Se muestra actualmente el escudo oficial Shito-Kai. Puedes subir el logo de tu dojo o evento (.png, .jpg).</span>
                   )}
                 </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Fondo del Torneo y Barra de Traslucidez */}
+          <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <label className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                <Palette className="w-3.5 h-3.5 text-rose-600" />
+                <span>Imagen de Fondo del Torneo</span>
+              </label>
+              <span className="text-[10px] text-slate-400 font-medium">Predeterminado: Cerezo Sakura Sumi-e</span>
+            </div>
+
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 bg-white p-2.5 rounded-lg border border-slate-200">
+              {/* Miniatura del fondo actual con la opacidad aplicada */}
+              <div className="relative shrink-0 w-20 h-16 rounded-lg border-2 border-slate-200 overflow-hidden bg-slate-100 flex items-center justify-center shadow-2xs">
+                <img
+                  src={form.customBg || sakuraTreeImg}
+                  alt="Vista Previa Fondo"
+                  className={`w-full h-full select-none ${
+                    form.customBg && form.bgFit === 'cover' ? 'object-cover' : 'object-contain object-top-right'
+                  }`}
+                  style={{
+                    opacity: form.bgOpacity,
+                    mixBlendMode: (!form.customBg || form.bgFit !== 'cover') ? 'multiply' : 'normal',
+                  }}
+                />
+                {form.customBg ? (
+                  <span className="absolute bottom-1 right-1 bg-emerald-500 text-white rounded-full p-0.5 shadow-xs" title="Fondo personalizado activo">
+                    <Check className="w-2.5 h-2.5" />
+                  </span>
+                ) : (
+                  <span className="absolute bottom-1 left-1 bg-slate-800/80 text-white text-[8px] font-bold px-1 rounded">
+                    Default
+                  </span>
+                )}
+              </div>
+
+              {/* Botones de acción para el fondo */}
+              <div className="space-y-1.5 flex-1 min-w-[200px]">
+                <div className="flex flex-wrap items-center gap-2">
+                  <label
+                    htmlFor="tournamentBgUpload"
+                    className="px-3 py-1.5 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-2xs transition-colors"
+                  >
+                    <Upload className="w-3.5 h-3.5 text-rose-400" />
+                    <span>{form.customBg ? 'Cambiar Imagen de Fondo' : 'Subir Fondo Personalizado'}</span>
+                  </label>
+                  <input
+                    id="tournamentBgUpload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleBackgroundUpload}
+                    className="hidden"
+                  />
+
+                  {form.customBg && (
+                    <button
+                      type="button"
+                      onClick={handleResetBackground}
+                      className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-300 flex items-center gap-1 transition-colors cursor-pointer"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      <span>Restablecer Predeterminado</span>
+                    </button>
+                  )}
+                </div>
+
+                {/* Si hay fondo personalizado, permitir elegir modo de ajuste */}
+                {form.customBg && (
+                  <div className="flex items-center gap-1.5 text-[11px] pt-0.5">
+                    <span className="text-slate-500 font-medium">Ajuste:</span>
+                    <button
+                      type="button"
+                      onClick={() => setForm(prev => ({ ...prev, bgFit: 'cover' }))}
+                      className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors cursor-pointer ${
+                        form.bgFit === 'cover'
+                          ? 'bg-slate-900 text-white'
+                          : 'bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200'
+                      }`}
+                    >
+                      Pantalla Completa
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setForm(prev => ({ ...prev, bgFit: 'contain' }))}
+                      className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors cursor-pointer ${
+                        form.bgFit === 'contain'
+                          ? 'bg-slate-900 text-white'
+                          : 'bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200'
+                      }`}
+                    >
+                      Esquina / Marca de Agua
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* BARRA DE TRASLUCIDEZ / OPACIDAD */}
+            <div className="bg-white p-3 rounded-lg border border-slate-200 space-y-2">
+              <div className="flex items-center justify-between text-[11px]">
+                <label className="font-bold text-slate-800 flex items-center gap-1.5">
+                  <Sliders className="w-3.5 h-3.5 text-rose-600" />
+                  <span>Ajuste de Tono Traslúcido del Fondo:</span>
+                </label>
+                <span className="font-mono font-bold text-slate-800 bg-slate-100 px-2.5 py-0.5 rounded text-[11px] border border-slate-300 shadow-2xs">
+                  {Math.round(form.bgOpacity * 100)}% de visibilidad ({100 - Math.round(form.bgOpacity * 100)}% traslúcido)
+                </span>
+              </div>
+
+              {/* Slider de menos a más traslúcido */}
+              <div className="space-y-1">
+                <input
+                  type="range"
+                  min="5"
+                  max="80"
+                  step="5"
+                  value={Math.round(form.bgOpacity * 100)}
+                  onChange={(e) => setForm(prev => ({ ...prev, bgOpacity: parseFloat(e.target.value) / 100 }))}
+                  className="w-full h-2.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-600 focus:outline-hidden"
+                />
+                <div className="flex items-center justify-between text-[10px] text-slate-500 font-medium">
+                  <span>← Más traslúcido (sutil y transparente)</span>
+                  <span>Menos traslúcido (marcado y visible) →</span>
+                </div>
+              </div>
+
+              {/* Mini caja de prueba de legibilidad */}
+              <div className="relative rounded-lg border border-slate-200 overflow-hidden bg-slate-100 p-2.5 text-center mt-2">
+                <div
+                  className="absolute inset-0 pointer-events-none overflow-hidden flex justify-end items-start"
+                  aria-hidden="true"
+                >
+                  <img
+                    src={form.customBg || sakuraTreeImg}
+                    alt=""
+                    className={`select-none ${
+                      form.customBg && form.bgFit === 'cover'
+                        ? 'w-full h-full object-cover'
+                        : 'h-full max-w-full object-contain ml-auto'
+                    }`}
+                    style={{
+                      opacity: form.bgOpacity,
+                      mixBlendMode: (!form.customBg || form.bgFit !== 'cover') ? 'multiply' : 'normal',
+                    }}
+                  />
+                </div>
+                <div className="relative z-10 py-1">
+                  <span className="bg-white/85 backdrop-blur-xs text-slate-900 px-3 py-1 rounded-md text-[11px] font-bold border border-slate-300 shadow-2xs inline-block">
+                    Ejemplo de legibilidad con {Math.round(form.bgOpacity * 100)}% de tono traslúcido
+                  </span>
+                </div>
               </div>
             </div>
           </div>

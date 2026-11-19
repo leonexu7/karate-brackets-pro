@@ -508,27 +508,14 @@ export default function TeacherRegistrationView({
 
   return (
     <div className="relative min-h-[calc(100vh-140px)]">
-      {/* FONDO OFICIAL CON ÁRBOL DE CEREZO EN TINTA JAPONESA (SUMI-E SAKURA) */}
-      <div
-        className="fixed inset-0 pointer-events-none z-0 overflow-hidden flex justify-end items-start"
-        aria-hidden="true"
-      >
-        <img
-          src={sakuraTreeImg}
-          alt=""
-          className="w-full max-w-lg sm:max-w-2xl md:max-w-3xl opacity-20 md:opacity-25 object-contain object-top-right select-none"
-          style={{ mixBlendMode: 'multiply' }}
-        />
-      </div>
-
       <div className="relative z-10 max-w-4xl mx-auto space-y-6 pb-12 px-2 sm:px-0">
-        {/* BANNER PRINCIPAL CON ESCUDO SHITO-KAI ROJO Y ÁRBOL DE CEREZO OFICIAL */}
+        {/* BANNER PRINCIPAL CON ESCUDO SHITO-KAI ROJO Y FONDO DEL TORNEO */}
         <div className="bg-white/95 backdrop-blur-xs rounded-3xl border border-rose-200/90 shadow-md overflow-hidden relative">
-          {/* ÁRBOL DE CEREZO OFICIAL EN LA PARTE DERECHA */}
+          {/* FONDO EN LA PARTE DERECHA DEL BANNER */}
           <div className="absolute right-0 top-0 bottom-0 flex items-center pr-1 sm:pr-4 pointer-events-none opacity-85">
             <img
-              src={sakuraTreeImg}
-              alt="Cerezo Shito-Kai"
+              src={tournament?.customBg || sakuraTreeImg}
+              alt="Fondo Torneo"
               className="w-40 sm:w-64 md:w-80 h-32 sm:h-44 object-contain object-right"
               style={{ mixBlendMode: 'multiply' }}
             />

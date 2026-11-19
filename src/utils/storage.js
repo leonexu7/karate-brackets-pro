@@ -40,6 +40,9 @@ export function loadTournamentState() {
       allowMixedInfant: parsed.tournament?.allowMixedInfant ?? true,
       weightDivisions: parsed.tournament?.weightDivisions ?? null,
       customLogo: parsed.tournament?.customLogo ?? null,
+      customBg: parsed.tournament?.customBg ?? null,
+      bgOpacity: parsed.tournament?.bgOpacity ?? 0.20,
+      bgFit: parsed.tournament?.bgFit ?? 'contain',
     };
 
     return {

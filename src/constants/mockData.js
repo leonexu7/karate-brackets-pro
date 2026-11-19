@@ -11,6 +11,9 @@ export const INITIAL_TOURNAMENT = {
   divideAdultsByWeight: false, // Por defecto en torneos chicos: Categoría abierta (Open) de peso en mayores
   allowMixedInfant: true, // Permitir categoría mixta en 6-7 años si faltan competidores
   customLogo: null, // Logotipo personalizado opcional (reemplaza al escudo Shito-Kai en toda la app y PDFs)
+  customBg: null, // Imagen de fondo personalizada (data URL Base64) o null para predeterminado (Cerezo Sakura)
+  bgOpacity: 0.20, // Nivel de opacidad / traslucidez del fondo (de 0.05 a 0.85, default 0.20)
+  bgFit: 'contain', // 'contain' (marca de agua en esquina) o 'cover' (cubrir pantalla completa)
 };
 
 // Iniciar con 0 dojos, 0 atletas y 0 equipos (totalmente limpio para registros reales)

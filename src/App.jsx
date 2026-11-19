@@ -39,6 +39,7 @@ import { buildTournamentBrackets } from './utils/bracketEngine';
 import { generateFullTournamentPDF } from './utils/pdfGenerator';
 import { INITIAL_TOURNAMENT, DEMO_ATHLETES, DEMO_DOJOS } from './constants/mockData';
 import { ShitoKaiLogo } from './assets/shitoKaiLogo';
+import sakuraTreeImg from './assets/sakura_tree.png';
 
 export default function App() {
   const [state, setState] = useState(() => {
@@ -437,7 +438,27 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/60 text-slate-900 flex flex-col font-sans selection:bg-rose-500 selection:text-white">
+    <div className="min-h-screen bg-slate-50/60 text-slate-900 flex flex-col font-sans selection:bg-rose-500 selection:text-white relative">
+      {/* FONDO GLOBAL CON REGULACIÓN DE TRASLUCIDEZ / OPACIDAD */}
+      <div
+        className="fixed inset-0 pointer-events-none z-0 overflow-hidden flex justify-end items-start"
+        aria-hidden="true"
+      >
+        <img
+          src={state.tournament?.customBg || sakuraTreeImg}
+          alt=""
+          className={`select-none transition-opacity duration-200 ${
+            state.tournament?.customBg && state.tournament?.bgFit === 'cover'
+              ? 'w-full h-full object-cover object-center'
+              : 'w-full max-w-lg sm:max-w-2xl md:max-w-3xl h-auto object-contain object-top-right'
+          }`}
+          style={{
+            opacity: state.tournament?.bgOpacity !== undefined ? state.tournament.bgOpacity : 0.20,
+            mixBlendMode: (!state.tournament?.customBg || state.tournament?.bgFit !== 'cover') ? 'multiply' : 'normal',
+          }}
+        />
+      </div>
+
       {/* Barra de Navegación Principal con Escudo Shito-Kai */}
       <Navbar
         tournament={state.tournament}
