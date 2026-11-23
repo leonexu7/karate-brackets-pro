@@ -10,6 +10,8 @@ export const INITIAL_TOURNAMENT = {
   feeDoubleModality: 300, // Costo de ficha oficial por 2 modalidades ($300 MXN)
   divideAdultsByWeight: false, // Por defecto en torneos chicos: Categoría abierta (Open) de peso en mayores
   allowMixedInfant: true, // Permitir categoría mixta en 6-7 años si faltan competidores
+  registrationDeadline: '', // Fecha y hora límite de inscripción (cierre automático para profesores)
+  groupByModalityProfile: true, // Agrupar por perfil de modalidad (Doble Modalidad, Solo Kumite, Solo Kata) para agilizar tatamis
   customLogo: null, // Logotipo personalizado opcional (reemplaza al escudo Shito-Kai en toda la app y PDFs)
   customBg: null, // Imagen de fondo personalizada (data URL Base64) o null para predeterminado (Cerezo Sakura)
   bgOpacity: 0.20, // Nivel de opacidad / traslucidez del fondo (de 0.05 a 0.85, default 0.20)

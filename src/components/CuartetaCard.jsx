@@ -52,7 +52,24 @@ export default function CuartetaCard({ cuarteta, tournament, onMatchWinner }) {
             4
           </span>
           <div>
-            <h3 className="font-semibold text-sm tracking-wide text-white">{cuarteta.categoryName}</h3>
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="font-semibold text-sm tracking-wide text-white">{cuarteta.categoryName}</h3>
+              {cuarteta.modalityProfile === 'doble' && (
+                <span className="text-[10px] font-bold bg-indigo-500/20 text-indigo-200 border border-indigo-400/30 px-2 py-0.5 rounded-full">
+                  🥋 Doble Modalidad
+                </span>
+              )}
+              {cuarteta.modalityProfile === 'solo_kumite' && (
+                <span className="text-[10px] font-bold bg-rose-500/20 text-rose-200 border border-rose-400/30 px-2 py-0.5 rounded-full">
+                  🥊 Solo Kumite
+                </span>
+              )}
+              {cuarteta.modalityProfile === 'solo_kata' && (
+                <span className="text-[10px] font-bold bg-amber-500/20 text-amber-200 border border-amber-400/30 px-2 py-0.5 rounded-full">
+                  🥋 Solo Kata
+                </span>
+              )}
+            </div>
             <div className="text-[11px] text-slate-300">
               Tatami {cuarteta.tatami} • Cuarteta Infantil: 4 Medallas Garantizadas (1 por Hoja)
             </div>
@@ -94,7 +111,9 @@ export default function CuartetaCard({ cuarteta, tournament, onMatchWinner }) {
                 <span className="w-2.5 h-6 bg-rose-500 rounded-xs shrink-0" />
                 <div>
                   <div className="text-xs font-semibold">{ath[0]?.fullName || '____________________'}</div>
-                  <div className="text-[10px] text-slate-500">{ath[0]?.dojoName || 'Dojo'} {ath[0]?.weight ? `• ${ath[0].weight}kg` : ''}</div>
+                  <div className="text-[10px] text-slate-500">
+                    {ath[0]?.dojoName || 'Dojo'} {ath[0]?.weight ? `• ${ath[0].weight}kg` : ''} {ath[0]?.isSoloKumite ? '• [Solo Kumite]' : (ath[0]?.isSoloKata ? '• [Solo Kata]' : '')}
+                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -116,7 +135,9 @@ export default function CuartetaCard({ cuarteta, tournament, onMatchWinner }) {
                 <span className="w-2.5 h-6 bg-blue-600 rounded-xs shrink-0" />
                 <div>
                   <div className="text-xs font-semibold">{ath[1]?.fullName || '____________________'}</div>
-                  <div className="text-[10px] text-slate-500">{ath[1]?.dojoName || 'Dojo'} {ath[1]?.weight ? `• ${ath[1].weight}kg` : ''}</div>
+                  <div className="text-[10px] text-slate-500">
+                    {ath[1]?.dojoName || 'Dojo'} {ath[1]?.weight ? `• ${ath[1].weight}kg` : ''} {ath[1]?.isSoloKumite ? '• [Solo Kumite]' : (ath[1]?.isSoloKata ? '• [Solo Kata]' : '')}
+                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -143,7 +164,9 @@ export default function CuartetaCard({ cuarteta, tournament, onMatchWinner }) {
                 <span className="w-2.5 h-6 bg-rose-500 rounded-xs shrink-0" />
                 <div>
                   <div className="text-xs font-semibold">{ath[2]?.fullName || '____________________'}</div>
-                  <div className="text-[10px] text-slate-500">{ath[2]?.dojoName || 'Dojo'} {ath[2]?.weight ? `• ${ath[2].weight}kg` : ''}</div>
+                  <div className="text-[10px] text-slate-500">
+                    {ath[2]?.dojoName || 'Dojo'} {ath[2]?.weight ? `• ${ath[2].weight}kg` : ''} {ath[2]?.isSoloKumite ? '• [Solo Kumite]' : (ath[2]?.isSoloKata ? '• [Solo Kata]' : '')}
+                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -165,7 +188,9 @@ export default function CuartetaCard({ cuarteta, tournament, onMatchWinner }) {
                 <span className="w-2.5 h-6 bg-blue-600 rounded-xs shrink-0" />
                 <div>
                   <div className="text-xs font-semibold">{ath[3]?.fullName || '____________________'}</div>
-                  <div className="text-[10px] text-slate-500">{ath[3]?.dojoName || 'Dojo'} {ath[3]?.weight ? `• ${ath[3].weight}kg` : ''}</div>
+                  <div className="text-[10px] text-slate-500">
+                    {ath[3]?.dojoName || 'Dojo'} {ath[3]?.weight ? `• ${ath[3].weight}kg` : ''} {ath[3]?.isSoloKumite ? '• [Solo Kumite]' : (ath[3]?.isSoloKata ? '• [Solo Kata]' : '')}
+                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-2">

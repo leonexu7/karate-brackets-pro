@@ -54,12 +54,20 @@ export default function BracketsView({
         matchGender = bGender === 'MIXTO' || b.categoryName.toUpperCase().includes('MIXTO');
       }
 
-      // Filtro por Modalidad (Kata / Kumite)
+      // Filtro por Modalidad (Kata / Kumite / Doble Modalidad / Solo Kumite / Solo Kata)
       let matchModality = true;
-      if (filterModality === 'kata') {
-        matchModality = b.categoryName.toLowerCase().includes('kata');
+      const bProfile = b.modalityProfile || '';
+      const bName = b.categoryName || '';
+      if (filterModality === 'doble') {
+        matchModality = bProfile === 'doble' || bName.includes('Doble Modalidad');
+      } else if (filterModality === 'solo_kumite') {
+        matchModality = bProfile === 'solo_kumite' || bName.includes('[SOLO KUMITE]');
+      } else if (filterModality === 'solo_kata') {
+        matchModality = bProfile === 'solo_kata' || bName.includes('[SOLO KATA]');
+      } else if (filterModality === 'kata') {
+        matchModality = bName.toLowerCase().includes('kata');
       } else if (filterModality === 'kumite') {
-        matchModality = b.categoryName.toLowerCase().includes('kumite');
+        matchModality = bName.toLowerCase().includes('kumite');
       }
 
       const matchSearch = b.categoryName.toLowerCase().includes(searchTerm.toLowerCase());
@@ -133,15 +141,19 @@ export default function BracketsView({
             <option value="MIXTO">Solo Mixto</option>
           </select>
 
-          {/* Filtro Modalidad (Kata / Kumite) */}
+          {/* Filtro Modalidad (Kata / Kumite / Doble / Especialistas) */}
           <select
             value={filterModality}
             onChange={(e) => setFilterModality(e.target.value)}
-            className="px-2.5 py-1.5 text-xs border border-tatami-300 rounded-lg bg-white text-tatami-700"
+            className="px-2.5 py-1.5 text-xs border border-tatami-300 rounded-lg bg-white text-tatami-700 font-medium"
+            title="Filtrar por perfil de modalidad"
           >
-            <option value="all">Kata y Kumite</option>
-            <option value="kata">Solo Kata</option>
-            <option value="kumite">Solo Kumite</option>
+            <option value="all">Todas las Modalidades</option>
+            <option value="doble">🥋 Doble Modalidad (Kata y Kumite)</option>
+            <option value="solo_kumite">🥊 Solo Kumite (Combate)</option>
+            <option value="solo_kata">🥋 Solo Kata (Formas)</option>
+            <option value="kumite">Solo Kumite (General)</option>
+            <option value="kata">Solo Kata (General)</option>
           </select>
 
           {/* Filtro Tatami */}

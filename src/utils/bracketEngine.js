@@ -391,25 +391,45 @@ export function generateMultiPageBracket(categoryKey, categoryName, athletes, ta
 export function buildTournamentBrackets(categoriesMap, tatamisCount = 3) {
   const allBrackets = [];
   let tatamiIndex = 1;
+  const pairTatamiMap = {};
 
   Object.values(categoriesMap).forEach(category => {
     const athletes = category.athletes || [];
     if (athletes.length === 0) return;
 
-    const assignedTatami = ((tatamiIndex - 1) % tatamisCount) + 1;
-    tatamiIndex++;
+    let assignedTatami;
+    if (category.pairKey) {
+      if (pairTatamiMap[category.pairKey]) {
+        assignedTatami = pairTatamiMap[category.pairKey];
+      } else {
+        assignedTatami = ((tatamiIndex - 1) % tatamisCount) + 1;
+        pairTatamiMap[category.pairKey] = assignedTatami;
+        tatamiIndex++;
+      }
+    } else {
+      assignedTatami = ((tatamiIndex - 1) % tatamisCount) + 1;
+      tatamiIndex++;
+    }
 
     if (category.format === 'cuarteta') {
       // Regla de Cuartetas Infantiles (<= 8-9 años): 1 por hoja, todos con medalla
       const cuartetas = generateCuartetas(category.key, category.name, athletes, assignedTatami, category.gender);
+      cuartetas.forEach(c => {
+        c.modalityProfile = category.modalityProfile || 'standard';
+        c.pairKey = category.pairKey || null;
+      });
       allBrackets.push(...cuartetas);
     } else if (athletes.length > 16) {
       // Categoría multitudinaria: Multi-hoja conectada (ej. 3 hojas para adolescentes)
       const multi = generateMultiPageBracket(category.key, category.name, athletes, assignedTatami, category.gender);
+      multi.modalityProfile = category.modalityProfile || 'standard';
+      multi.pairKey = category.pairKey || null;
       allBrackets.push(multi);
     } else {
       // Gráfica estándar de 8 o 16 competidores por hoja
       const std = generateStandardBracket(category.key, category.name, athletes, assignedTatami, null, category.gender);
+      std.modalityProfile = category.modalityProfile || 'standard';
+      std.pairKey = category.pairKey || null;
       allBrackets.push(std);
     }
   });

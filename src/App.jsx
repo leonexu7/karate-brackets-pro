@@ -150,9 +150,10 @@ export default function App() {
     return groupAthletesIntoCategories(state.athletes || [], state.tournament.date, dojosMap, {
       divideAdultsByWeight: state.tournament.divideAdultsByWeight ?? false,
       allowMixedInfant: state.tournament.allowMixedInfant ?? true,
+      groupByModalityProfile: state.tournament.groupByModalityProfile ?? true,
       weightDivisions: state.tournament.weightDivisions,
     });
-  }, [state.athletes, state.tournament.date, dojosMap, state.tournament.divideAdultsByWeight, state.tournament.allowMixedInfant, state.tournament.weightDivisions]);
+  }, [state.athletes, state.tournament.date, dojosMap, state.tournament.divideAdultsByWeight, state.tournament.allowMixedInfant, state.tournament.groupByModalityProfile, state.tournament.weightDivisions]);
 
   // Generación automática de llaves
   const brackets = useMemo(() => {

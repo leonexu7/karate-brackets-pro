@@ -219,6 +219,14 @@ export function renderCuartetaPage(doc, cuarteta, tournament) {
   doc.setTextColor(...COLOR_DARK);
   doc.text('COMBATE 1 — SEMIFINAL 1', leftX + 4, 47);
 
+  const getAthDojoLabel = (athlete) => {
+    if (!athlete) return 'Dojo / Escuela';
+    let base = athlete.dojoName || 'Dojo';
+    if (athlete.isSoloKumite) base += ' [Solo Kumite]';
+    else if (athlete.isSoloKata) base += ' [Solo Kata]';
+    return base;
+  };
+
   // Atleta 1 (Aka)
   doc.setFillColor(...COLOR_AKA);
   doc.rect(leftX + 3, 53, 2.5, 10, 'F');
@@ -230,7 +238,7 @@ export function renderCuartetaPage(doc, cuarteta, tournament) {
   drawFitText(doc, ath[0]?.fullName || '__________________________', leftX + 17, 59, colW - 32, 7.5, 6);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(...COLOR_MUTED);
-  drawFitText(doc, ath[0]?.dojoName || 'Dojo / Escuela', leftX + 17, 63, colW - 32, 6.5, 5.5);
+  drawFitText(doc, getAthDojoLabel(ath[0]), leftX + 17, 63, colW - 32, 6.5, 5.5);
 
   // Casilla de puntos Aka
   doc.setDrawColor(...COLOR_LINE);
@@ -251,7 +259,7 @@ export function renderCuartetaPage(doc, cuarteta, tournament) {
   drawFitText(doc, ath[1]?.fullName || '__________________________', leftX + 17, 75, colW - 32, 7.5, 6);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(...COLOR_MUTED);
-  drawFitText(doc, ath[1]?.dojoName || 'Dojo / Escuela', leftX + 17, 79, colW - 32, 6.5, 5.5);
+  drawFitText(doc, getAthDojoLabel(ath[1]), leftX + 17, 79, colW - 32, 6.5, 5.5);
 
   // Casilla de puntos Ao
   doc.setDrawColor(...COLOR_LINE);
@@ -280,7 +288,7 @@ export function renderCuartetaPage(doc, cuarteta, tournament) {
   drawFitText(doc, ath[2]?.fullName || '__________________________', leftX + 17, 117, colW - 32, 7.5, 6);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(...COLOR_MUTED);
-  drawFitText(doc, ath[2]?.dojoName || 'Dojo / Escuela', leftX + 17, 121, colW - 32, 6.5, 5.5);
+  drawFitText(doc, getAthDojoLabel(ath[2]), leftX + 17, 121, colW - 32, 6.5, 5.5);
 
   // Casilla puntos Aka
   doc.setDrawColor(...COLOR_LINE);
@@ -301,7 +309,7 @@ export function renderCuartetaPage(doc, cuarteta, tournament) {
   drawFitText(doc, ath[3]?.fullName || '__________________________', leftX + 17, 133, colW - 32, 7.5, 6);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(...COLOR_MUTED);
-  drawFitText(doc, ath[3]?.dojoName || 'Dojo / Escuela', leftX + 17, 137, colW - 32, 6.5, 5.5);
+  drawFitText(doc, getAthDojoLabel(ath[3]), leftX + 17, 137, colW - 32, 6.5, 5.5);
 
   // Casilla puntos Ao
   doc.setDrawColor(...COLOR_LINE);
@@ -705,7 +713,8 @@ export function renderStandardBracketPage(doc, bracket, tournament, customBadge 
         if (match.aka.dojoName) {
           doc.setFont('helvetica', 'normal');
           doc.setTextColor(...COLOR_MUTED);
-          drawFitText(doc, match.aka.dojoName, roundX + 7.5, lineY_aka - 0.7, boxW - 16, 4.8, 3.8);
+          const akaDojo = match.aka.dojoName + (match.aka.isSoloKumite ? ' [Solo Kumite]' : (match.aka.isSoloKata ? ' [Solo Kata]' : ''));
+          drawFitText(doc, akaDojo, roundX + 7.5, lineY_aka - 0.7, boxW - 16, 4.8, 3.8);
         }
       } else {
         drawFitText(doc, '____________________', roundX + 7.5, lineY_aka - 1.0, boxW - 16, 6.5, 5.0);
@@ -730,7 +739,8 @@ export function renderStandardBracketPage(doc, bracket, tournament, customBadge 
         if (match.ao.dojoName) {
           doc.setFont('helvetica', 'normal');
           doc.setTextColor(...COLOR_MUTED);
-          drawFitText(doc, match.ao.dojoName, roundX + 7.5, lineY_ao - 0.7, boxW - 16, 4.8, 3.8);
+          const aoDojo = match.ao.dojoName + (match.ao.isSoloKumite ? ' [Solo Kumite]' : (match.ao.isSoloKata ? ' [Solo Kata]' : ''));
+          drawFitText(doc, aoDojo, roundX + 7.5, lineY_ao - 0.7, boxW - 16, 4.8, 3.8);
         }
       } else {
         drawFitText(doc, '____________________', roundX + 7.5, lineY_ao - 1.0, boxW - 16, 6.5, 5.0);

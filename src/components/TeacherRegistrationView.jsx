@@ -110,6 +110,32 @@ export default function TeacherRegistrationView({
   const [successNotice, setSuccessNotice] = useState('');
   const [suggestedInfo, setSuggestedInfo] = useState(null);
 
+  // Verificar si el periodo de inscripciones ha finalizado según la fecha límite configurada
+  const isRegistrationClosed = useMemo(() => {
+    if (!tournament?.registrationDeadline) return false;
+    const dlStr = tournament.registrationDeadline;
+    const dlTime = new Date(dlStr.includes('T') ? dlStr : `${dlStr}T23:59:59`).getTime();
+    return !isNaN(dlTime) && Date.now() > dlTime;
+  }, [tournament?.registrationDeadline]);
+
+  const formattedDeadline = useMemo(() => {
+    if (!tournament?.registrationDeadline) return '';
+    try {
+      const d = new Date(tournament.registrationDeadline.includes('T') ? tournament.registrationDeadline : `${tournament.registrationDeadline}T23:59:59`);
+      if (isNaN(d.getTime())) return tournament.registrationDeadline;
+      return d.toLocaleDateString('es-MX', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch (_) {
+      return tournament.registrationDeadline;
+    }
+  }, [tournament?.registrationDeadline]);
+
   // Manejar cambio de Kyu y sincronizar/validar la categoría de competencia
   const handleKyuChange = (newBeltId) => {
     const kyu = getKyuInfo(newBeltId);
@@ -177,6 +203,10 @@ export default function TeacherRegistrationView({
   // Manejar envío individual
   const handleSingleSubmit = (e) => {
     e.preventDefault();
+    if (isRegistrationClosed) {
+      alert(`El periodo oficial de inscripciones ha finalizado el ${formattedDeadline}. No es posible registrar nuevos competidores.`);
+      return;
+    }
     if (!dojoInfo.name.trim()) {
       alert('Por favor ingresa el nombre oficial completo de tu Dojo o Escuela.');
       return;
@@ -243,6 +273,10 @@ export default function TeacherRegistrationView({
 
   // Manejar carga de archivo Excel (.xlsx / .csv)
   const handleExcelFileSelect = async (e) => {
+    if (isRegistrationClosed) {
+      alert(`El periodo oficial de inscripciones ha finalizado el ${formattedDeadline}.`);
+      return;
+    }
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -269,6 +303,10 @@ export default function TeacherRegistrationView({
 
   // Confirmar registro de atletas leídos desde el archivo Excel
   const handleConfirmExcelImport = () => {
+    if (isRegistrationClosed) {
+      alert(`El periodo oficial de inscripciones ha finalizado el ${formattedDeadline}.`);
+      return;
+    }
     if (!dojoInfo.name.trim() || !dojoInfo.sensei.trim()) {
       alert('Por favor completa primero los datos oficiales de tu Dojo y Sensei en la Sección 1.');
       return;
@@ -296,6 +334,10 @@ export default function TeacherRegistrationView({
   // Manejar importación en lote por texto pegado
   const handleBatchSubmit = (e) => {
     e.preventDefault();
+    if (isRegistrationClosed) {
+      alert(`El periodo oficial de inscripciones ha finalizado el ${formattedDeadline}.`);
+      return;
+    }
     setBatchError('');
 
     if (!dojoInfo.name.trim() || !dojoInfo.sensei.trim()) {
@@ -433,6 +475,10 @@ export default function TeacherRegistrationView({
   // Guardar edición de un competidor
   const handleSaveEditedAthlete = (e) => {
     e.preventDefault();
+    if (isRegistrationClosed) {
+      alert(`El periodo oficial de inscripciones ha finalizado el ${formattedDeadline}. No es posible modificar datos.`);
+      return;
+    }
     if (!editingAthlete.fullName?.trim() || !editingAthlete.birthDate) {
       alert('El nombre y la fecha de nacimiento son obligatorios.');
       return;
@@ -472,6 +518,10 @@ export default function TeacherRegistrationView({
 
   // Eliminar competidor desde la vista del profesor
   const handleDeleteCoachAthlete = (athlete) => {
+    if (isRegistrationClosed) {
+      alert(`El periodo oficial de inscripciones ha finalizado el ${formattedDeadline}. No es posible eliminar competidores.`);
+      return;
+    }
     if (window.confirm(`¿Deseas eliminar a ${athlete.fullName} del registro de tu escuela?`)) {
       if (onDeleteAthlete) {
         onDeleteAthlete(athlete.id);
@@ -569,6 +619,42 @@ export default function TeacherRegistrationView({
             <span>Privacidad protegida: Las listas de otros dojos y competidores permanecen confidenciales hasta el inicio del torneo.</span>
           </div>
         </div>
+
+        {/* AVISO DE FECHA LÍMITE / CIERRE DE INSCRIPCIONES */}
+        {isRegistrationClosed ? (
+          <div className="bg-rose-50 border-2 border-rose-500 rounded-2xl p-4 sm:p-5 flex items-start gap-3.5 shadow-xs animate-in fade-in">
+            <div className="w-10 h-10 rounded-xl bg-rose-100 border border-rose-300 flex items-center justify-center shrink-0 text-rose-700">
+              <Lock className="w-5 h-5" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="font-bold text-sm sm:text-base text-rose-950 flex items-center gap-2">
+                <span>Periodo Oficial de Inscripciones Concluido</span>
+                <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-rose-600 text-white">
+                  Bloqueado
+                </span>
+              </h3>
+              <p className="text-xs text-rose-800 leading-relaxed">
+                La fecha límite para el registro de competidores finalizó el <strong>{formattedDeadline}</strong>.
+                Por disposición del Comité Organizador, el sistema ya no admite nuevos registros ni modificaciones en este portal.
+              </p>
+              <p className="text-[11px] text-rose-700 font-medium">
+                Puedes consultar abajo la lista de atletas que registraste y el desglose de cuotas. Si requieres algún cambio o alta de emergencia, por favor acude directamente a la mesa directiva del torneo.
+              </p>
+            </div>
+          </div>
+        ) : tournament?.registrationDeadline ? (
+          <div className="bg-amber-50/90 border border-amber-300 rounded-xl p-3 flex items-center justify-between gap-3 text-xs text-amber-900 shadow-2xs">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>
+                Fecha límite de inscripciones: <strong>{formattedDeadline}</strong>
+              </span>
+            </div>
+            <span className="text-[10px] font-bold bg-amber-200 text-amber-900 px-2 py-0.5 rounded-md shrink-0">
+              Cierre programado
+            </span>
+          </div>
+        ) : null}
 
         {/* Notificación de Éxito */}
         {successNotice && (
@@ -1017,10 +1103,24 @@ export default function TeacherRegistrationView({
               <div className="pt-2">
                 <button
                   type="submit"
-                  className="w-full sm:w-auto px-6 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold text-xs shadow-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                  disabled={isRegistrationClosed}
+                  className={`w-full sm:w-auto px-6 py-2.5 rounded-xl font-bold text-xs shadow-xs flex items-center justify-center gap-2 transition-colors ${
+                    isRegistrationClosed
+                      ? 'bg-slate-300 text-slate-500 cursor-not-allowed border border-slate-300'
+                      : 'bg-rose-600 hover:bg-rose-700 text-white cursor-pointer'
+                  }`}
                 >
-                  <UserPlus className="w-4 h-4" />
-                  <span>Inscribir Competidor a la Lista</span>
+                  {isRegistrationClosed ? (
+                    <>
+                      <Lock className="w-4 h-4 text-slate-500" />
+                      <span>Inscripciones Cerradas (Fecha Límite Vencida)</span>
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="w-4 h-4" />
+                      <span>Inscribir Competidor a la Lista</span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>
@@ -1066,12 +1166,19 @@ export default function TeacherRegistrationView({
                     <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700">
                       <Upload className="w-6 h-6" />
                     </div>
-                    <label
-                      htmlFor="excelFileInput"
-                      className="cursor-pointer text-xs font-bold text-emerald-800 hover:text-emerald-950 underline"
-                    >
-                      Haz clic aquí para seleccionar tu archivo Excel (.xlsx / .csv)
-                    </label>
+                    {isRegistrationClosed ? (
+                      <div className="text-xs font-bold text-slate-500 flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-300">
+                        <Lock className="w-4 h-4 text-slate-500" />
+                        <span>Carga de archivos bloqueada (Inscripciones Cerradas)</span>
+                      </div>
+                    ) : (
+                      <label
+                        htmlFor="excelFileInput"
+                        className="cursor-pointer text-xs font-bold text-emerald-800 hover:text-emerald-950 underline"
+                      >
+                        Haz clic aquí para seleccionar tu archivo Excel (.xlsx / .csv)
+                      </label>
+                    )}
                     <p className="text-[11px] text-slate-500">
                       El sistema leerá automáticamente los nombres, fechas de nacimiento, grados Kyu, modalidades y pesos.
                     </p>
@@ -1142,10 +1249,15 @@ export default function TeacherRegistrationView({
                       <button
                         type="button"
                         onClick={handleConfirmExcelImport}
-                        className="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl font-bold shadow-xs flex items-center gap-2 transition-colors cursor-pointer"
+                        disabled={isRegistrationClosed}
+                        className={`px-5 py-2 rounded-xl font-bold shadow-xs flex items-center gap-2 transition-colors ${
+                          isRegistrationClosed
+                            ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                            : 'bg-emerald-700 hover:bg-emerald-800 text-white cursor-pointer'
+                        }`}
                       >
-                        <UserPlus className="w-4 h-4" />
-                        <span>Inscribir los {excelParsedList.length} Competidores</span>
+                        {isRegistrationClosed ? <Lock className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
+                        <span>{isRegistrationClosed ? 'Inscripciones Cerradas' : `Inscribir los ${excelParsedList.length} Competidores`}</span>
                       </button>
                     </div>
                   </div>
@@ -1175,9 +1287,15 @@ export default function TeacherRegistrationView({
                   )}
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg font-bold text-xs cursor-pointer"
+                    disabled={isRegistrationClosed}
+                    className={`px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 ${
+                      isRegistrationClosed
+                        ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                        : 'bg-slate-800 hover:bg-slate-900 text-white cursor-pointer'
+                    }`}
                   >
-                    Procesar Texto
+                    {isRegistrationClosed ? <Lock className="w-3.5 h-3.5" /> : null}
+                    <span>{isRegistrationClosed ? 'Inscripciones Cerradas' : 'Procesar Texto'}</span>
                   </button>
                 </form>
               </details>
@@ -1359,24 +1477,33 @@ export default function TeacherRegistrationView({
                           ${athleteFee} MXN
                         </span>
 
-                        <button
-                          type="button"
-                          onClick={() => setEditingAthlete({ ...ath })}
-                          className="px-3 py-1.5 bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-300 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
-                          title="Editar los datos de este competidor"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                          <span>Editar Competidor</span>
-                        </button>
+                        {isRegistrationClosed ? (
+                          <span className="text-[10px] text-slate-400 bg-slate-100 px-2 py-1 rounded-md flex items-center gap-1 border border-slate-200">
+                            <Lock className="w-3 h-3 text-slate-400" />
+                            Bloqueado
+                          </span>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => setEditingAthlete({ ...ath })}
+                              className="px-3 py-1.5 bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-300 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                              title="Editar los datos de este competidor"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                              <span>Editar Competidor</span>
+                            </button>
 
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteCoachAthlete(ath)}
-                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                          title="Eliminar competidor de la escuela"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteCoachAthlete(ath)}
+                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                              title="Eliminar competidor de la escuela"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
                   );

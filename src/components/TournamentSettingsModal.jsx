@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Settings, Calendar, MapPin, Shield, RefreshCw, Key, Trash2, Coins, AlertTriangle, Download, Scale, Users, Plus, RotateCcw, Copy, Check, Upload, Image as ImageIcon, Sliders, Palette } from 'lucide-react';
+import { X, Settings, Calendar, MapPin, Shield, RefreshCw, Key, Trash2, Coins, AlertTriangle, Download, Scale, Users, Plus, RotateCcw, Copy, Check, Upload, Image as ImageIcon, Sliders, Palette, Lock, Clock, Layers } from 'lucide-react';
 import { ShitoKaiLogo } from '../assets/shitoKaiLogo';
 import sakuraTreeImg from '../assets/sakura_tree.png';
 import { DEMO_ATHLETES, DEMO_DOJOS } from '../constants/mockData';
@@ -25,6 +25,8 @@ export default function TournamentSettingsModal({
     feeDoubleModality: tournament.feeDoubleModality !== undefined ? tournament.feeDoubleModality : 300,
     divideAdultsByWeight: tournament.divideAdultsByWeight !== undefined ? tournament.divideAdultsByWeight : false,
     allowMixedInfant: tournament.allowMixedInfant !== undefined ? tournament.allowMixedInfant : true,
+    registrationDeadline: tournament.registrationDeadline || '',
+    groupByModalityProfile: tournament.groupByModalityProfile !== undefined ? tournament.groupByModalityProfile : true,
     customLogo: tournament.customLogo || null,
     customBg: tournament.customBg || null,
     bgOpacity: tournament.bgOpacity !== undefined ? tournament.bgOpacity : 0.20,
@@ -312,6 +314,39 @@ export default function TournamentSettingsModal({
     showTempFeedback('Restablecido al fondo predeterminado (Cerezo Sakura)');
   };
 
+  const handleSetDeadlinePreset = (offsetDays, timeStr = '23:59') => {
+    if (!form.date) {
+      alert('Primero especifica la Fecha del Torneo para calcular el cierre automático.');
+      return;
+    }
+    try {
+      const [y, m, d] = form.date.split('-').map(Number);
+      const target = new Date(y, m - 1, d + offsetDays);
+      const pad = (n) => String(n).padStart(2, '0');
+      const targetStr = `${target.getFullYear()}-${pad(target.getMonth() + 1)}-${pad(target.getDate())}T${timeStr}`;
+      setForm(prev => ({ ...prev, registrationDeadline: targetStr }));
+      showTempFeedback(`Fecha límite ajustada (${offsetDays === 0 ? 'mismo día' : `${Math.abs(offsetDays)} día(s) antes`})`);
+    } catch (_) {}
+  };
+
+  const formatDeadlineDisplay = (dtStr) => {
+    if (!dtStr) return '';
+    try {
+      const d = new Date(dtStr.includes('T') ? dtStr : `${dtStr}T23:59:59`);
+      if (isNaN(d.getTime())) return dtStr;
+      return d.toLocaleDateString('es-MX', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch (_) {
+      return dtStr;
+    }
+  };
+
   const currentList = weightDivisions?.[activeAgeTab]?.[activeGender] || [];
 
   const handleSubmit = (e) => {
@@ -324,6 +359,8 @@ export default function TournamentSettingsModal({
       feeDoubleModality: parseFloat(form.feeDoubleModality) || 0,
       divideAdultsByWeight: Boolean(form.divideAdultsByWeight),
       allowMixedInfant: Boolean(form.allowMixedInfant),
+      registrationDeadline: form.registrationDeadline || '',
+      groupByModalityProfile: Boolean(form.groupByModalityProfile),
       weightDivisions: weightDivisions,
       customLogo: form.customLogo || null,
       customBg: form.customBg || null,
@@ -621,6 +658,100 @@ export default function TournamentSettingsModal({
                   <option key={n} value={n}>{n} Tatami{n > 1 ? 's' : ''}</option>
                 ))}
               </select>
+            </div>
+          </div>
+
+          {/* Fecha Límite de Inscripciones (Cierre Automático para Profesores) */}
+          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5">
+                <Clock className="w-4 h-4 text-rose-600" />
+                <label className="font-bold text-slate-900 text-xs">
+                  Fecha Límite de Inscripción (Cierre Automático para Maestros)
+                </label>
+              </div>
+              {form.registrationDeadline ? (
+                (() => {
+                  const dlTime = new Date(form.registrationDeadline.includes('T') ? form.registrationDeadline : `${form.registrationDeadline}T23:59:59`).getTime();
+                  const isClosed = !isNaN(dlTime) && Date.now() > dlTime;
+                  return isClosed ? (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-300 flex items-center gap-1">
+                      <Lock className="w-2.5 h-2.5" />
+                      Inscripciones CERRADAS
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1">
+                      <Check className="w-2.5 h-2.5 text-emerald-600" />
+                      Inscripciones ABIERTAS
+                    </span>
+                  );
+                })()
+              ) : (
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">
+                  Sin límite (Abiertas)
+                </span>
+              )}
+            </div>
+
+            <p className="text-[11px] text-slate-600">
+              Establece una fecha y hora límite. Al cumplirse, el portal de maestros quedará bloqueado impidiendo nuevos registros. Tú como Administrador podrás seguir haciendo cambios de emergencia.
+            </p>
+
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  type="datetime-local"
+                  value={form.registrationDeadline}
+                  onChange={(e) => setForm({ ...form, registrationDeadline: e.target.value })}
+                  className="px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 outline-hidden focus:ring-1 focus:ring-rose-500 font-medium"
+                />
+                {form.registrationDeadline && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setForm(prev => ({ ...prev, registrationDeadline: '' }));
+                      showTempFeedback('Fecha límite removida (Inscripciones abiertas)');
+                    }}
+                    className="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                  >
+                    Quitar Límite
+                  </button>
+                )}
+              </div>
+
+              {/* Atajos Rápidos */}
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mr-1">
+                  Atajos Rápidos:
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleSetDeadlinePreset(-1, '23:59')}
+                  className="px-2 py-1 bg-white hover:bg-slate-100 border border-slate-300 rounded-md text-[11px] text-slate-700 font-medium cursor-pointer shadow-2xs"
+                >
+                  1 día antes (23:59 hrs)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSetDeadlinePreset(-2, '23:59')}
+                  className="px-2 py-1 bg-white hover:bg-slate-100 border border-slate-300 rounded-md text-[11px] text-slate-700 font-medium cursor-pointer shadow-2xs"
+                >
+                  2 días antes (23:59 hrs)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSetDeadlinePreset(0, '08:00')}
+                  className="px-2 py-1 bg-white hover:bg-slate-100 border border-slate-300 rounded-md text-[11px] text-slate-700 font-medium cursor-pointer shadow-2xs"
+                >
+                  Día del evento (08:00 hrs)
+                </button>
+              </div>
+
+              {form.registrationDeadline && (
+                <div className="text-[11px] text-slate-600 bg-white p-2 rounded-lg border border-slate-200">
+                  📅 Cierre programado: <strong>{formatDeadlineDisplay(form.registrationDeadline)}</strong>
+                </div>
+              )}
             </div>
           </div>
 
@@ -922,6 +1053,48 @@ export default function TournamentSettingsModal({
                 <span
                   className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
                     form.allowMixedInfant ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+
+          {/* Agrupación de Áreas por Modalidad (Kata, Kumite y Doble Modalidad) */}
+          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-1">
+                <label className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                  <Layers className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Agrupar Áreas por Modalidad (Doble Modalidad, Solo Kumite, Solo Kata)</span>
+                </label>
+                <p className="text-[11px] text-slate-600">
+                  {form.groupByModalityProfile
+                    ? 'Activado: Agrupa en llaves y áreas compartidas a los competidores de Doble Modalidad (Kata y Kumite en el mismo tatami), separando a los de Solo Kumite y Solo Kata para no revolver las mesas.'
+                    : 'Desactivado: Modo clásico (todos los alumnos inscritos a una modalidad entran a la misma gráfica general sin distinguir su perfil).'}
+                </p>
+                <div className="text-[10px] text-slate-500 bg-white p-2 rounded-lg border border-slate-200 space-y-1">
+                  <div>
+                    ✓ <strong>Doble Modalidad:</strong> Realizan Kata y Kumite juntos en el mismo tatami sin retrasos.
+                  </div>
+                  <div>
+                    ✓ <strong>Solo Kumite / Solo Kata:</strong> Tienen sus propias gráficas exclusivas.
+                  </div>
+                  <div>
+                    ✓ <strong>Regla de casos extremos:</strong> Si un niño queda solo en Solo Kumite o Solo Kata (1 huérfano), se integra a la gráfica de Doble Modalidad para garantizar que compita por medalla.
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setForm(prev => ({ ...prev, groupByModalityProfile: !prev.groupByModalityProfile }))}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                  form.groupByModalityProfile ? 'bg-indigo-600' : 'bg-slate-300'
+                }`}
+              >
+                <span
+                  className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
+                    form.groupByModalityProfile ? 'translate-x-5' : 'translate-x-0'
                   }`}
                 />
               </button>

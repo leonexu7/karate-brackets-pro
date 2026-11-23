@@ -38,6 +38,8 @@ export function loadTournamentState() {
       feeDoubleModality: parsed.tournament?.feeDoubleModality ?? 300,
       divideAdultsByWeight: parsed.tournament?.divideAdultsByWeight ?? false,
       allowMixedInfant: parsed.tournament?.allowMixedInfant ?? true,
+      registrationDeadline: parsed.tournament?.registrationDeadline ?? '',
+      groupByModalityProfile: parsed.tournament?.groupByModalityProfile ?? true,
       weightDivisions: parsed.tournament?.weightDivisions ?? null,
       customLogo: parsed.tournament?.customLogo ?? null,
       customBg: parsed.tournament?.customBg ?? null,

@@ -57,7 +57,7 @@ export default function BracketCard({ bracket, tournament }) {
                             </div>
                             {m.aka?.dojoName && (
                               <div className="text-[10px] text-slate-500 font-normal truncate">
-                                {m.aka.dojoName}
+                                {m.aka.dojoName} {m.aka?.isSoloKumite ? '• [Solo Kumite]' : (m.aka?.isSoloKata ? '• [Solo Kata]' : '')}
                               </div>
                             )}
                           </div>
@@ -77,7 +77,7 @@ export default function BracketCard({ bracket, tournament }) {
                             </div>
                             {m.ao?.dojoName && (
                               <div className="text-[10px] text-slate-500 font-normal truncate">
-                                {m.ao.dojoName}
+                                {m.ao.dojoName} {m.ao?.isSoloKumite ? '• [Solo Kumite]' : (m.ao?.isSoloKata ? '• [Solo Kata]' : '')}
                               </div>
                             )}
                           </div>
@@ -261,8 +261,23 @@ export default function BracketCard({ bracket, tournament }) {
         <div className="flex items-center gap-3">
           <ShitoKaiLogo src={tournament?.customLogo} className="w-7 h-7" />
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <h3 className="font-semibold text-sm tracking-wide text-white">{bracket.categoryName}</h3>
+              {bracket.modalityProfile === 'doble' && (
+                <span className="bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                  🥋 Doble Modalidad
+                </span>
+              )}
+              {bracket.modalityProfile === 'solo_kumite' && (
+                <span className="bg-rose-500/20 text-rose-300 border border-rose-400/30 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                  🥊 Solo Kumite
+                </span>
+              )}
+              {bracket.modalityProfile === 'solo_kata' && (
+                <span className="bg-amber-500/20 text-amber-300 border border-amber-400/30 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                  🥋 Solo Kata
+                </span>
+              )}
               {isMultiPage && (
                 <span className="bg-sky-500/20 text-sky-300 border border-sky-400/30 text-[10px] font-bold px-2 py-0.5 rounded-full">
                   Multi-Hoja ({bracket.totalPages} Hojas Conectadas)
