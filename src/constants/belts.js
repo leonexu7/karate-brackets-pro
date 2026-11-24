@@ -64,17 +64,37 @@ export function getKyuInfo(kyuId) {
   const exact = KYUS.find(k => k.id.toLowerCase() === normalized);
   if (exact) return exact;
 
-  if (normalized.includes('10')) return KYUS[0];
-  if (normalized.includes('9')) return KYUS[1];
-  if (normalized.includes('8') || normalized.includes('amarill')) return KYUS[2];
-  if (normalized.includes('7') || normalized.includes('naranj')) return KYUS[3];
-  if (normalized.includes('6') || normalized.includes('verd')) return KYUS[4];
-  if (normalized.includes('5') || normalized.includes('azul')) return KYUS[5];
-  if (normalized.includes('4') || normalized.includes('morad')) return KYUS[6];
-  if (normalized.includes('3')) return KYUS[7];
-  if (normalized.includes('2')) return KYUS[8];
-  if (normalized.includes('1') && !normalized.includes('dan')) return KYUS[9];
-  if (normalized.includes('negr') || normalized.includes('dan') || normalized.includes('cafe') || normalized.includes('marron')) return KYUS[10];
+  // Cintas Negras / Dan / Términos japoneses
+  if (
+    normalized.includes('negr') ||
+    normalized.includes('dan') ||
+    normalized.includes('black') ||
+    normalized.includes('shodan') ||
+    normalized.includes('nidan') ||
+    normalized.includes('sandan') ||
+    normalized.includes('yondan')
+  ) {
+    return KYUS[10];
+  }
+
+  // Cintas Café / Marrón (3º, 2º o 1º Kyu según número)
+  if (normalized.includes('cafe') || normalized.includes('marron')) {
+    if (normalized.includes('1') || /\bi\b/.test(normalized)) return KYUS[9];
+    if (normalized.includes('2') || /\bii\b/.test(normalized)) return KYUS[8];
+    return KYUS[7]; // 3º Kyu por defecto para café
+  }
+
+  // Grados por dígitos o números romanos
+  if (normalized.includes('10') || /\bx\b/.test(normalized) || normalized.includes('blanc')) return KYUS[0];
+  if (normalized.includes('9') || /\bix\b/.test(normalized)) return KYUS[1];
+  if (normalized.includes('8') || /\bviii\b/.test(normalized) || normalized.includes('amarill')) return KYUS[2];
+  if (normalized.includes('7') || /\bvii\b/.test(normalized) || normalized.includes('naranj')) return KYUS[3];
+  if (normalized.includes('6') || /\bvi\b/.test(normalized) || normalized.includes('verd')) return KYUS[4];
+  if (normalized.includes('5') || /\bv\b/.test(normalized) || normalized.includes('azul')) return KYUS[5];
+  if (normalized.includes('4') || /\biv\b/.test(normalized) || normalized.includes('morad') || normalized.includes('roj')) return KYUS[6];
+  if (normalized.includes('3') || /\biii\b/.test(normalized)) return KYUS[7];
+  if (normalized.includes('2') || /\bii\b/.test(normalized)) return KYUS[8];
+  if (normalized.includes('1') || /\bi\b/.test(normalized)) return KYUS[9];
 
   return KYUS[0];
 }

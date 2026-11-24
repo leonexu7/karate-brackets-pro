@@ -146,18 +146,41 @@ export default function AthleteList({
                   return (
                     <tr key={ath.id} className="hover:bg-slate-50/80 transition-colors">
                       <td className="py-3 px-4">
-                        <div className="font-semibold text-slate-900">{ath.fullName}</div>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-semibold text-slate-900">{ath.fullName}</span>
+                          <span
+                            className={`text-[9px] uppercase font-bold px-1.5 py-0.2 rounded border ${
+                              ath.registeredVia === 'teacher_portal' || ath.id?.startsWith('real-')
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                                : 'bg-slate-100 text-slate-600 border-slate-200'
+                            }`}
+                            title={ath.registeredVia === 'teacher_portal' || ath.id?.startsWith('real-') ? 'Inscrito por Profesor / Portal de Maestros' : 'Inscrito en Mesa de Control'}
+                          >
+                            {ath.registeredVia === 'teacher_portal' || ath.id?.startsWith('real-') ? 'Sensei' : 'Mesa'}
+                          </span>
+                        </div>
                         <div className="text-[11px] text-slate-500 flex items-center gap-1">
                           <span className={ath.gender === 'F' ? 'text-rose-600 font-semibold' : 'text-blue-600 font-semibold'}>
                             {ath.gender === 'F' ? 'FEM' : 'VAR'}
                           </span>
                           <span>• Nac: {ath.birthDate || 'N/D'}</span>
+                          {ath.height ? <span>• Est: {ath.height} cm</span> : null}
                         </div>
                       </td>
 
                       <td className="py-3 px-3">
                         <div className="font-medium text-slate-800">{ath.dojoName || dojo?.name || 'Independiente'}</div>
-                        <div className="text-[11px] text-slate-500">{dojo?.city || ''}</div>
+                        <div className="text-[11px] text-slate-500 flex flex-wrap items-center gap-1">
+                          {(ath.sensei || dojo?.sensei) && (
+                            <span>Prof. {ath.sensei || dojo?.sensei}</span>
+                          )}
+                          {(ath.city || dojo?.city) && (
+                            <span>• {ath.city || dojo?.city}</span>
+                          )}
+                          {(ath.phone || dojo?.phone) && (
+                            <span className="text-[10px] text-emerald-700 font-mono">({ath.phone || dojo?.phone})</span>
+                          )}
+                        </div>
                       </td>
 
                       <td className="py-3 px-3">

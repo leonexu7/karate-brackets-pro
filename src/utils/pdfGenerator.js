@@ -992,3 +992,201 @@ export function generateSingleBracketPDF(bracket, tournament) {
   const safeCategory = (bracket.categoryName || 'Grafica').replace(/[^a-zA-Z0-9_-]/g, '_');
   doc.save(`Grafica_ShitoKai_${safeCategory}.pdf`);
 }
+
+/**
+ * Genera la Cédula Oficial de Inscripción y Cobro del Dojo para imprimir o llevar en físico
+ */
+export function generateTeacherRegistrationPDF({ dojoInfo, athletes, tournament }) {
+  const doc = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'letter',
+  });
+
+  const w = doc.internal.pageSize.getWidth();
+  const h = doc.internal.pageSize.getHeight();
+
+  // 1. Encabezado Oficial
+  drawShitoKaiLogoPDF(doc, 14, 12, 16, tournament?.customLogo);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.setTextColor(...COLOR_DARK);
+  doc.text((tournament?.name || 'TORNEO DE KARATE DO').toUpperCase(), 35, 17);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(...COLOR_MUTED);
+  doc.text(
+    `Fecha: ${tournament?.date || '2026'} | Sede: ${tournament?.venue || 'Gimnasio Oficial'} | Organización ${tournament?.organizer || tournament?.bannerBadgeText || 'Shito-Kai Karate-Do'}`,
+    35,
+    22
+  );
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9.5);
+  doc.setTextColor(...COLOR_AKA);
+  doc.text('CÉDULA OFICIAL DE INSCRIPCIÓN Y COBRO DE DOJO', 35, 27);
+
+  // Línea separadora
+  doc.setDrawColor(...COLOR_LINE);
+  doc.setLineWidth(0.4);
+  doc.line(14, 30, w - 14, 30);
+
+  // 2. Cuadro de Datos del Dojo
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(14, 33, w - 28, 18, 1.5, 1.5, 'FD');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(...COLOR_DARK);
+  doc.text(`Escuela / Dojo: ${dojoInfo?.name || 'Sin especificar'}`, 18, 39);
+  doc.text(`Sensei / Profesor: ${dojoInfo?.sensei || 'Sin especificar'}`, 18, 46);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.text(`Ciudad: ${dojoInfo?.city || 'N/D'}`, w / 2 + 15, 39);
+  doc.text(`Teléfono / WhatsApp: ${dojoInfo?.phone || 'N/D'}`, w / 2 + 15, 46);
+
+  // 3. Tabla de Atletas
+  let startY = 56;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(...COLOR_DARK);
+  doc.text(`RELACIÓN DE COMPETIDORES INSCRITOS (${athletes.length} ATLETAS)`, 14, startY);
+
+  startY += 3;
+  // Encabezados de tabla
+  doc.setFillColor(241, 245, 249);
+  doc.rect(14, startY, w - 28, 6.5, 'F');
+  doc.setDrawColor(...COLOR_LINE);
+  doc.setLineWidth(0.2);
+  doc.rect(14, startY, w - 28, 6.5, 'D');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(6.8);
+  doc.setTextColor(...COLOR_DARK);
+  doc.text('#', 16, startY + 4.5);
+  doc.text('NOMBRE COMPLETO', 23, startY + 4.5);
+  doc.text('EDAD / RAMA', 75, startY + 4.5);
+  doc.text('GRADO KYU', 98, startY + 4.5);
+  doc.text('CATEGORÍA', 123, startY + 4.5);
+  doc.text('MODALIDADES', 158, startY + 4.5);
+  doc.text('PESO/EST.', 186, startY + 4.5);
+
+  startY += 6.5;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(6.5);
+
+  athletes.forEach((ath, idx) => {
+    // Si sobrepasa la página, agregar nueva página
+    if (startY > h - 55) {
+      doc.addPage();
+      startY = 18;
+      // Cabecera en nueva página
+      doc.setFillColor(241, 245, 249);
+      doc.rect(14, startY, w - 28, 6.5, 'F');
+      doc.rect(14, startY, w - 28, 6.5, 'D');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(6.8);
+      doc.setTextColor(...COLOR_DARK);
+      doc.text('#', 16, startY + 4.5);
+      doc.text('NOMBRE COMPLETO', 23, startY + 4.5);
+      doc.text('EDAD / RAMA', 75, startY + 4.5);
+      doc.text('GRADO KYU', 98, startY + 4.5);
+      doc.text('CATEGORÍA', 123, startY + 4.5);
+      doc.text('MODALIDADES', 158, startY + 4.5);
+      doc.text('PESO/EST.', 186, startY + 4.5);
+      startY += 6.5;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(6.5);
+    }
+
+    if (idx % 2 === 1) {
+      doc.setFillColor(249, 250, 251);
+      doc.rect(14, startY, w - 28, 5.5, 'F');
+    }
+    doc.setDrawColor(226, 232, 240);
+    doc.line(14, startY + 5.5, w - 14, startY + 5.5);
+
+    doc.setTextColor(...COLOR_DARK);
+    doc.text(String(idx + 1), 16, startY + 4);
+    doc.text(String(ath.fullName || '').slice(0, 32), 23, startY + 4);
+
+    const age = calculateAge(ath.birthDate, tournament?.date);
+    const genderStr = ath.gender === 'F' ? 'Fem' : 'Var';
+    doc.text(`${age !== null ? `${age}a` : '—'} (${genderStr})`, 75, startY + 4);
+
+    doc.text(String(ath.kyuName || ath.beltId || '').slice(0, 14), 98, startY + 4);
+    doc.text(String(ath.competingCategoryName || '').slice(0, 20), 123, startY + 4);
+
+    const mods = (ath.modalities || []).map(m => m.includes('kumite') ? 'Kumite' : 'Kata').join(' + ');
+    doc.text(mods || 'Kata+Kumite', 158, startY + 4);
+
+    const phys = `${ath.weight ? `${ath.weight}kg` : ''}${ath.height ? ` / ${ath.height}cm` : ''}`;
+    doc.text(phys || '—', 186, startY + 4);
+
+    startY += 5.5;
+  });
+
+  // 4. Resumen Financiero y de Cobro
+  startY += 5;
+  if (startY > h - 45) {
+    doc.addPage();
+    startY = 20;
+  }
+
+  const feeSingle = tournament?.feeSingleModality ?? 300;
+  const feeDouble = tournament?.feeDoubleModality ?? 300;
+  const singleCount = athletes.filter(a => (a.modalities || []).length === 1).length;
+  const doubleCount = athletes.filter(a => (a.modalities || []).length >= 2).length;
+  const totalPay = (singleCount * feeSingle) + (doubleCount * feeDouble);
+
+  doc.setFillColor(240, 253, 244);
+  doc.setDrawColor(187, 247, 208);
+  doc.roundedRect(14, startY, w - 28, 18, 1.5, 1.5, 'FD');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(22, 101, 52);
+  doc.text('RESUMEN DE CUOTAS Y LIQUIDACIÓN:', 18, startY + 5.5);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(...COLOR_DARK);
+  doc.text(`• 1 Modalidad: ${singleCount} atletas x $${feeSingle} = $${(singleCount * feeSingle).toLocaleString('es-MX')} MXN`, 18, startY + 10.5);
+  doc.text(`• 2 Modalidades: ${doubleCount} atletas x $${feeDouble} = $${(doubleCount * feeDouble).toLocaleString('es-MX')} MXN`, 18, startY + 15);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9.5);
+  doc.setTextColor(22, 101, 52);
+  doc.text(`TOTAL A LIQUIDAR: $${totalPay.toLocaleString('es-MX')} MXN`, w / 2 + 15, startY + 11.5);
+
+  // 5. Espacio de Firmas
+  startY += 26;
+  if (startY > h - 25) {
+    doc.addPage();
+    startY = 25;
+  }
+
+  const sigW = 60;
+  doc.setDrawColor(...COLOR_LINE);
+  doc.setLineWidth(0.3);
+
+  // Firma del Sensei
+  const s1X = 25;
+  doc.line(s1X, startY + 10, s1X + sigW, startY + 10);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(...COLOR_MUTED);
+  doc.text('Firma del Sensei / Profesor Responsable', s1X + sigW / 2, startY + 14, { align: 'center' });
+
+  // Sello y Firma Mesa de Control
+  const s2X = w - 85;
+  doc.line(s2X, startY + 10, s2X + sigW, startY + 10);
+  doc.text('Sello y Firma - Mesa de Control / Registro', s2X + sigW / 2, startY + 14, { align: 'center' });
+
+  // Descargar archivo
+  const safeName = (dojoInfo?.name || 'Dojo').replace(/\s+/g, '_').slice(0, 25);
+  doc.save(`Cedula_Inscripcion_${safeName}_${new Date().toISOString().slice(0, 10)}.pdf`);
+}

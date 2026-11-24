@@ -43,10 +43,10 @@ export default function Navbar({
           <ShitoKaiLogo src={tournament?.customLogo} className="w-8 h-8 drop-shadow-xs" />
           
           <div>
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-sm tracking-wide text-white">{tournament.name}</span>
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+              <span className="font-semibold text-xs sm:text-sm tracking-wide text-white">{tournament.name}</span>
               <span
-                className="text-[10px] border px-1.5 py-0.2 rounded font-serif truncate max-w-[140px] font-bold transition-all shadow-2xs"
+                className="text-[10px] border px-1.5 py-0.2 rounded font-serif shrink-0 font-bold transition-all shadow-2xs"
                 style={{
                   backgroundColor: tournament?.badgeNavbarBgColor || tournament?.badgeBgColor || 'rgba(76, 5, 25, 0.8)',
                   borderColor: tournament?.badgeBorderColor || 'rgba(159, 18, 57, 0.6)',
@@ -56,11 +56,11 @@ export default function Navbar({
                 {tournament?.navbarBadgeText || (tournament?.customLogo ? (tournament?.organizer || 'OFICIAL') : 'SHITO-KAI')}
               </span>
               {isAdmin ? (
-                <span className="bg-amber-500/20 text-amber-300 border border-amber-400/30 text-[10px] font-bold px-2 py-0.2 rounded-full flex items-center gap-1">
+                <span className="bg-amber-500/20 text-amber-300 border border-amber-400/30 text-[10px] font-bold px-2 py-0.2 rounded-full flex items-center gap-1 shrink-0">
                   <Lock className="w-3 h-3 text-amber-400" /> Modo Administrador
                 </span>
               ) : (
-                <span className="bg-slate-800 text-slate-300 text-[10px] px-2 py-0.2 rounded-full">
+                <span className="bg-slate-800 text-slate-300 text-[10px] px-2 py-0.2 rounded-full shrink-0">
                   Portal de Maestros
                 </span>
               )}

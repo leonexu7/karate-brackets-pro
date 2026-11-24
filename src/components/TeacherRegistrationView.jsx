@@ -37,8 +37,9 @@ import {
 import { MODALITIES, calculateAge, findAgeDivision, findWeightDivision } from '../constants/categories';
 import { ShitoKaiLogo } from '../assets/shitoKaiLogo';
 import sakuraTreeImg from '../assets/sakura_tree.png';
-import { downloadExcelTemplate, parseExcelFile } from '../utils/excelHandler';
+import { downloadExcelTemplate, parseExcelFile, normalizeExcelDate } from '../utils/excelHandler';
 import { normalizeDojoKey, findMatchingDojo } from '../utils/dojoHelper';
+import { generateTeacherRegistrationPDF } from '../utils/pdfGenerator';
 
 export default function TeacherRegistrationView({
   tournament,
@@ -109,6 +110,7 @@ export default function TeacherRegistrationView({
   const [myRegisteredAthletes, setMyRegisteredAthletes] = useState([]);
   const [successNotice, setSuccessNotice] = useState('');
   const [suggestedInfo, setSuggestedInfo] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Verificar si el periodo de inscripciones ha finalizado según la fecha límite configurada
   const isRegistrationClosed = useMemo(() => {
@@ -203,6 +205,8 @@ export default function TeacherRegistrationView({
   // Manejar envío individual
   const handleSingleSubmit = (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+
     if (isRegistrationClosed) {
       alert(`El periodo oficial de inscripciones ha finalizado el ${formattedDeadline}. No es posible registrar nuevos competidores.`);
       return;
@@ -215,8 +219,25 @@ export default function TeacherRegistrationView({
       alert('Por favor ingresa el nombre del Sensei o profesor responsable.');
       return;
     }
-    if (!athleteForm.fullName.trim() || !athleteForm.birthDate) {
-      alert('Por favor completa el nombre del atleta y su fecha de nacimiento.');
+
+    const cleanFullName = athleteForm.fullName.replace(/\s+/g, ' ').trim();
+    if (!cleanFullName || cleanFullName.length < 3) {
+      alert('Por favor ingresa el nombre completo válido del competidor (mínimo 3 letras).');
+      return;
+    }
+    if (!athleteForm.birthDate) {
+      alert('Por favor selecciona la fecha de nacimiento del atleta.');
+      return;
+    }
+
+    const calculatedAge = calculateAge(athleteForm.birthDate, tournament.date);
+    if (calculatedAge === null || isNaN(calculatedAge) || calculatedAge < 3 || calculatedAge > 95) {
+      alert('La fecha de nacimiento no es válida o la edad calculada está fuera de rango (3 a 95 años). Por favor verifica la fecha ingresada.');
+      return;
+    }
+
+    if (!athleteForm.modalities || athleteForm.modalities.length === 0) {
+      alert('Debes seleccionar al menos una modalidad de participación (Kata o Kumite).');
       return;
     }
 
@@ -225,50 +246,84 @@ export default function TeacherRegistrationView({
       return;
     }
 
-    const kyu = getKyuInfo(athleteForm.beltId);
-    const finalCompCategory = resolveCompetingCategory(athleteForm.beltId, athleteForm.competingCategory);
-    const catInfo = getKyuCategoryInfo(finalCompCategory);
+    if (athleteForm.height !== '') {
+      const h = parseFloat(athleteForm.height);
+      if (isNaN(h) || h < 60 || h > 230) {
+        alert('Por favor introduce una estatura válida en centímetros (ej. 120 cm).');
+        return;
+      }
+    }
 
-    const newAthlete = {
-      id: `real-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-      fullName: athleteForm.fullName.trim(),
-      birthDate: athleteForm.birthDate,
-      gender: athleteForm.gender,
-      beltId: kyu.id,
-      kyuName: kyu.name,
-      competingCategory: finalCompCategory,
-      competingCategoryName: catInfo.name,
-      weight: athleteForm.weight !== '' ? parseFloat(athleteForm.weight) : null,
-      height: athleteForm.height !== '' ? parseFloat(athleteForm.height) : null,
-      modalities: athleteForm.modalities.length > 0 ? athleteForm.modalities : ['kumite_ind'],
-      dojoName: dojoInfo.name.trim(),
-      sensei: dojoInfo.sensei.trim(),
-      city: dojoInfo.city.trim(),
-      phone: dojoInfo.phone.trim(),
-    };
+    if (athleteForm.weight !== '') {
+      const w = parseFloat(athleteForm.weight);
+      if (isNaN(w) || w < 10 || w > 200) {
+        alert('Por favor introduce un peso válido en kilogramos (ej. 45.5 kg).');
+        return;
+      }
+    }
 
-    onRegisterAthlete(newAthlete, dojoInfo);
-    setMyRegisteredAthletes(prev => [newAthlete, ...prev]);
+    // Comprobación de atleta duplicado en el mismo dojo
+    const isDuplicate = combinedAthletes.some(
+      a => a.fullName?.trim().toLowerCase() === cleanFullName.toLowerCase() && a.birthDate === athleteForm.birthDate
+    );
+    if (isDuplicate) {
+      const proceed = window.confirm(
+        `Ya existe un alumno registrado con el nombre "${cleanFullName}" y la misma fecha de nacimiento en tu escuela.\n\n¿Estás seguro de que deseas inscribirlo nuevamente?`
+      );
+      if (!proceed) return;
+    }
 
-    // Limpiar formulario de atleta manteniendo datos del dojo
-    setAthleteForm({
-      fullName: '',
-      birthDate: '',
-      gender: athleteForm.gender,
-      beltId: '10_kyu',
-      competingCategory: 'cat_10',
-      weight: '',
-      height: '',
-      modalities: ['kumite_ind', 'kata_ind'],
-    });
-
+    setIsSubmitting(true);
     try {
-      localStorage.setItem('karate_coach_saved_dojo', JSON.stringify(dojoInfo));
-      setIsDojoLocked(true);
-    } catch (_) {}
+      const kyu = getKyuInfo(athleteForm.beltId);
+      const finalCompCategory = resolveCompetingCategory(athleteForm.beltId, athleteForm.competingCategory);
+      const catInfo = getKyuCategoryInfo(finalCompCategory);
 
-    setSuccessNotice(`¡Competidor ${newAthlete.fullName} (${kyu.name}) inscrito exitosamente en ${catInfo.name}!`);
-    setTimeout(() => setSuccessNotice(''), 4500);
+      const newAthlete = {
+        id: `real-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        fullName: cleanFullName,
+        birthDate: athleteForm.birthDate,
+        gender: athleteForm.gender,
+        beltId: kyu.id,
+        kyuName: kyu.name,
+        competingCategory: finalCompCategory,
+        competingCategoryName: catInfo.name,
+        weight: athleteForm.weight !== '' ? parseFloat(athleteForm.weight) : null,
+        height: athleteForm.height !== '' ? parseFloat(athleteForm.height) : null,
+        modalities: [...athleteForm.modalities],
+        dojoName: dojoInfo.name.trim(),
+        sensei: dojoInfo.sensei.trim(),
+        city: dojoInfo.city.trim(),
+        phone: dojoInfo.phone.trim(),
+        registeredVia: 'teacher_portal',
+        createdAt: new Date().toISOString(),
+      };
+
+      onRegisterAthlete(newAthlete, dojoInfo);
+      setMyRegisteredAthletes(prev => [newAthlete, ...prev]);
+
+      // Limpiar formulario de atleta manteniendo datos del dojo
+      setAthleteForm({
+        fullName: '',
+        birthDate: '',
+        gender: athleteForm.gender,
+        beltId: '10_kyu',
+        competingCategory: 'cat_10',
+        weight: '',
+        height: '',
+        modalities: ['kumite_ind', 'kata_ind'],
+      });
+
+      try {
+        localStorage.setItem('karate_coach_saved_dojo', JSON.stringify(dojoInfo));
+        setIsDojoLocked(true);
+      } catch (_) {}
+
+      setSuccessNotice(`¡Competidor ${newAthlete.fullName} (${kyu.name}) inscrito exitosamente en ${catInfo.name}!`);
+      setTimeout(() => setSuccessNotice(''), 4500);
+    } finally {
+      setTimeout(() => setIsSubmitting(false), 500);
+    }
   };
 
   // Manejar carga de archivo Excel (.xlsx / .csv)
@@ -321,6 +376,8 @@ export default function TeacherRegistrationView({
       sensei: dojoInfo.sensei.trim(),
       city: dojoInfo.city.trim(),
       phone: dojoInfo.phone.trim(),
+      registeredVia: 'teacher_portal',
+      createdAt: new Date().toISOString(),
     }));
 
     onRegisterBatchAthletes(formattedAthletes, dojoInfo);
@@ -356,17 +413,30 @@ export default function TeacherRegistrationView({
       if (idx === 0 && line.toLowerCase().includes('nombre')) return;
       const parts = line.includes('\t') ? line.split('\t') : line.split(',');
       if (parts.length >= 2) {
-        const fullName = parts[0]?.trim();
-        const birthDate = parts[1]?.trim();
+        const rawName = parts[0]?.trim();
+        const cleanName = rawName?.replace(/\s+/g, ' ');
+        const rawBirthDate = parts[1]?.trim();
+        const validBirthDate = normalizeExcelDate(rawBirthDate) || '2016-01-01';
         const gender = (parts[2]?.trim().toUpperCase().startsWith('F') ? 'F' : 'M');
         const kyuInput = parts[3]?.trim() || '10_kyu';
         const kyu = getKyuInfo(kyuInput);
         const weight = parseFloat(parts[4]?.trim()) || null;
         const height = parseFloat(parts[5]?.trim()) || null;
 
+        // Modalities detection from parts[6] or parts[7]
+        let modalities = ['kumite_ind', 'kata_ind'];
+        const possibleMod = (parts[6]?.trim() || parts[7]?.trim() || '').toLowerCase();
+        if (possibleMod) {
+          if (possibleMod.includes('kata') && !possibleMod.includes('kumi') && !possibleMod.includes('ambas')) {
+            modalities = ['kata_ind'];
+          } else if ((possibleMod.includes('kumi') || possibleMod.includes('combate')) && !possibleMod.includes('kata') && !possibleMod.includes('ambas')) {
+            modalities = ['kumite_ind'];
+          }
+        }
+
         let specifiedCat = parts[6]?.trim();
         let finalCat = kyu.naturalCategory;
-        if (specifiedCat) {
+        if (specifiedCat && !specifiedCat.toLowerCase().includes('kata') && !specifiedCat.toLowerCase().includes('kumite')) {
           if (specifiedCat.includes('10')) specifiedCat = 'cat_10';
           else if (specifiedCat.includes('9') || specifiedCat.includes('8')) specifiedCat = 'cat_9_8';
           else if (specifiedCat.includes('7') || specifiedCat.includes('4')) specifiedCat = 'cat_7_4';
@@ -375,11 +445,11 @@ export default function TeacherRegistrationView({
         }
         const catInfo = getKyuCategoryInfo(finalCat);
 
-        if (fullName) {
+        if (cleanName && cleanName.length >= 2) {
           parsed.push({
             id: `real-batch-${Date.now()}-${idx}`,
-            fullName,
-            birthDate: birthDate.match(/^\d{4}-\d{2}-\d{2}$/) ? birthDate : '2016-01-01',
+            fullName: cleanName,
+            birthDate: validBirthDate,
             gender,
             beltId: kyu.id,
             kyuName: kyu.name,
@@ -387,18 +457,20 @@ export default function TeacherRegistrationView({
             competingCategoryName: catInfo.name,
             weight,
             height,
-            modalities: ['kumite_ind', 'kata_ind'],
+            modalities,
             dojoName: dojoInfo.name.trim(),
             sensei: dojoInfo.sensei.trim(),
             city: dojoInfo.city.trim(),
             phone: dojoInfo.phone.trim(),
+            registeredVia: 'teacher_portal',
+            createdAt: new Date().toISOString(),
           });
         }
       }
     });
 
     if (parsed.length === 0) {
-      setBatchError('No se reconocieron registros válidos. Usa el formato: Nombre, Fecha(AAAA-MM-DD), Sexo(M/F), Kyu, Peso');
+      setBatchError('No se reconocieron registros válidos. Usa el formato: Nombre, Fecha (AAAA-MM-DD o DD/MM/AAAA), Sexo(M/F), Kyu, Peso, Estatura, Modalidad');
       return;
     }
 
@@ -853,7 +925,7 @@ export default function TeacherRegistrationView({
             <form onSubmit={handleSingleSubmit} className="space-y-4 text-xs">
               {/* Nombre y Fecha de Nacimiento */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
+                <div className="scroll-mt-24">
                   <label className="block font-semibold text-slate-800 mb-1">Nombre Completo del Competidor *</label>
                   <input
                     type="text"
@@ -865,7 +937,7 @@ export default function TeacherRegistrationView({
                   />
                 </div>
 
-                <div>
+                <div className="scroll-mt-24">
                   <label className="block font-semibold text-slate-800 mb-1 flex items-center gap-1">
                     <Calendar className="w-3.5 h-3.5 text-slate-500" />
                     Fecha de Nacimiento *
@@ -873,6 +945,8 @@ export default function TeacherRegistrationView({
                   <input
                     type="date"
                     required
+                    min="1930-01-01"
+                    max={new Date().toISOString().split('T')[0]}
                     value={athleteForm.birthDate}
                     onChange={(e) => setAthleteForm({ ...athleteForm, birthDate: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-hidden focus:ring-2 focus:ring-rose-500 bg-white"
@@ -1081,6 +1155,13 @@ export default function TeacherRegistrationView({
                     );
                   })}
                 </div>
+
+                {athleteForm.modalities.length === 0 && (
+                  <div className="p-2.5 bg-rose-50 border border-rose-300 rounded-xl text-rose-800 text-[11px] font-semibold flex items-center gap-1.5 animate-in fade-in">
+                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                    <span>Atención: Debes seleccionar al menos una modalidad (Kata o Kumite) para inscribir al alumno.</span>
+                  </div>
+                )}
               </div>
 
               {/* Resumen y Clasificación en Tiempo Real */}
@@ -1116,10 +1197,12 @@ export default function TeacherRegistrationView({
               <div className="pt-2">
                 <button
                   type="submit"
-                  disabled={isRegistrationClosed}
+                  disabled={isRegistrationClosed || isSubmitting || athleteForm.modalities.length === 0}
                   className={`w-full sm:w-auto px-6 py-2.5 rounded-xl font-bold text-xs shadow-xs flex items-center justify-center gap-2 transition-colors ${
-                    isRegistrationClosed
+                    isRegistrationClosed || athleteForm.modalities.length === 0
                       ? 'bg-slate-300 text-slate-500 cursor-not-allowed border border-slate-300'
+                      : isSubmitting
+                      ? 'bg-rose-400 text-white cursor-wait'
                       : 'bg-rose-600 hover:bg-rose-700 text-white cursor-pointer'
                   }`}
                 >
@@ -1127,6 +1210,11 @@ export default function TeacherRegistrationView({
                     <>
                       <Lock className="w-4 h-4 text-slate-500" />
                       <span>Inscripciones Cerradas (Fecha Límite Vencida)</span>
+                    </>
+                  ) : isSubmitting ? (
+                    <>
+                      <UserPlus className="w-4 h-4 animate-spin" />
+                      <span>Inscribiendo competidor...</span>
                     </>
                   ) : (
                     <>
@@ -1368,25 +1456,36 @@ export default function TeacherRegistrationView({
                 ${totalGrandPayment.toLocaleString('es-MX')} <span className="text-xs font-normal text-emerald-100">MXN</span>
               </div>
               <span className="text-[10px] text-emerald-100 block">
-                Total de competidores: {myRegisteredAthletes.length}
+                Total de competidores: {combinedAthletes.length}
               </span>
             </div>
           </div>
 
-          {/* BOTÓN ENVIAR REPORTE AL ORGANIZADOR POR WHATSAPP */}
-          {myRegisteredAthletes.length > 0 && (
+          {/* BOTONES: ENVIAR REPORTE AL ORGANIZADOR POR WHATSAPP Y DESCARGAR PDF */}
+          {combinedAthletes.length > 0 && (
             <div className="pt-3 flex flex-wrap items-center justify-between gap-3 border-t border-emerald-100">
               <span className="text-[11px] text-emerald-800 font-medium">
-                ¿Terminaste de inscribir? Envía tu reporte de alumnos y cuota al organizador:
+                ¿Terminaste de inscribir? Descarga tu cédula oficial o envíala al organizador:
               </span>
-              <button
-                type="button"
-                onClick={handleSendWhatsAppReport}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
-              >
-                <MessageSquare className="w-4 h-4" />
-                <span>Enviar Cédula y Ficha al Organizador por WhatsApp</span>
-              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => generateTeacherRegistrationPDF({ dojoInfo, athletes: combinedAthletes, tournament })}
+                  className="px-4 py-2 bg-slate-900 hover:bg-black text-white rounded-xl font-bold text-xs flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
+                  title="Descargar cédula oficial de inscripción en PDF lista para imprimir"
+                >
+                  <Download className="w-4 h-4 text-rose-400" />
+                  <span>Descargar Cédula Oficial (PDF)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSendWhatsAppReport}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  <span>Enviar Cédula por WhatsApp</span>
+                </button>
+              </div>
             </div>
           )}
         </div>

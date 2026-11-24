@@ -12,10 +12,10 @@
 export function separateDojos(athletes) {
   if (!athletes || athletes.length <= 1) return [...(athletes || [])];
 
-  // Agrupar por dojoId
+  // Agrupar por dojoId o dojoName
   const byDojo = {};
   athletes.forEach(a => {
-    const dId = a.dojoId || 'sin_dojo';
+    const dId = a.dojoId || a.dojoName || 'sin_dojo';
     if (!byDojo[dId]) byDojo[dId] = [];
     byDojo[dId].push(a);
   });
@@ -100,10 +100,22 @@ export function generateCuartetas(categoryKey, categoryName, athletes, tatamiNum
       gender: resolvedGender,
       athletes: slots,
       // Estructura de combates:
-      // Combate 1 (Semi 1): slots[0] (Aka) vs slots[1] (Ao)
-      // Combate 2 (Semi 2): slots[2] (Aka) vs slots[3] (Ao)
-      // Combate 3 (Final): Ganador Semi 1 vs Ganador Semi 2
-      matches: [
+      // Si son exactamente 2 atletas: van directo a la Gran Final
+      // Si son 3 o 4 atletas: Semifinal 1, Semifinal 2 y Gran Final
+      matches: chunk.length === 2 ? [
+        {
+          id: `${cuartetaId}_m1`,
+          matchNumber: 1,
+          roundName: 'Gran Final Directa',
+          aka: slots[0],
+          ao: slots[1],
+          scoreAka: 0,
+          scoreAo: 0,
+          winner: null, // Oro
+          runnerUp: null, // Plata
+          note: 'Final directa por campeonato',
+        }
+      ] : [
         {
           id: `${cuartetaId}_m1`,
           matchNumber: 1,
@@ -114,6 +126,7 @@ export function generateCuartetas(categoryKey, categoryName, athletes, tatamiNum
           scoreAo: 0,
           winner: slots[1] === null ? slots[0] : null,
           loser: slots[1] === null ? null : null, // Bronce 1
+          isBye: slots[1] === null,
         },
         {
           id: `${cuartetaId}_m2`,
@@ -125,13 +138,14 @@ export function generateCuartetas(categoryKey, categoryName, athletes, tatamiNum
           scoreAo: 0,
           winner: slots[3] === null ? slots[2] : null,
           loser: slots[3] === null ? null : null, // Bronce 2
+          isBye: slots[3] === null,
         },
         {
           id: `${cuartetaId}_m3`,
           matchNumber: 3,
           roundName: 'Gran Final',
-          aka: null, // Viene de m1
-          ao: null,  // Viene de m2
+          aka: slots[1] === null ? slots[0] : null, // Si hubo Bye en Semi 1
+          ao: slots[3] === null ? slots[2] : null,  // Si hubo Bye en Semi 2
           scoreAka: 0,
           scoreAo: 0,
           winner: null, // Oro
