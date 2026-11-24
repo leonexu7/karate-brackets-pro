@@ -45,6 +45,11 @@ export function loadTournamentState() {
       customBg: parsed.tournament?.customBg ?? null,
       bgOpacity: parsed.tournament?.bgOpacity ?? 0.20,
       bgFit: parsed.tournament?.bgFit ?? 'contain',
+      bannerBadgeText: parsed.tournament?.bannerBadgeText ?? 'Shito-Kai México',
+      navbarBadgeText: parsed.tournament?.navbarBadgeText ?? 'SHITO-KAI',
+      badgeBgColor: parsed.tournament?.badgeBgColor ?? '#FFF1F2',
+      badgeBorderColor: parsed.tournament?.badgeBorderColor ?? '#FECDD3',
+      badgeTextColor: parsed.tournament?.badgeTextColor ?? '#BE123C',
     };
 
     return {

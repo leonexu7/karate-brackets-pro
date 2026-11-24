@@ -32,7 +32,12 @@ export default function Navbar({
       </div>
 
       {/* Barra superior con identidad marcial y escudo Shito-Kai */}
-      <div className="bg-slate-900 text-white px-4 py-2 border-b-2 border-rose-500 flex flex-wrap items-center justify-between gap-3 text-xs relative z-10">
+      <div
+        className="bg-slate-900 text-white px-4 py-2 border-b-2 flex flex-wrap items-center justify-between gap-3 text-xs relative z-10 transition-colors"
+        style={{
+          borderBottomColor: tournament?.badgeBorderColor || '#f43f5e',
+        }}
+      >
         <div className="flex items-center space-x-3">
           {/* Escudo oficial o logotipo personalizado (chico, discreto, en la parte superior izquierda) */}
           <ShitoKaiLogo src={tournament?.customLogo} className="w-8 h-8 drop-shadow-xs" />
@@ -40,8 +45,15 @@ export default function Navbar({
           <div>
             <div className="flex items-center gap-2">
               <span className="font-semibold text-sm tracking-wide text-white">{tournament.name}</span>
-              <span className="text-[10px] bg-rose-950/80 text-rose-300 border border-rose-800/60 px-1.5 py-0.2 rounded font-serif truncate max-w-[140px]">
-                {tournament?.customLogo ? (tournament?.organizer || 'OFICIAL') : 'SHITO-KAI'}
+              <span
+                className="text-[10px] border px-1.5 py-0.2 rounded font-serif truncate max-w-[140px] font-bold transition-all shadow-2xs"
+                style={{
+                  backgroundColor: tournament?.badgeNavbarBgColor || tournament?.badgeBgColor || 'rgba(76, 5, 25, 0.8)',
+                  borderColor: tournament?.badgeBorderColor || 'rgba(159, 18, 57, 0.6)',
+                  color: tournament?.badgeNavbarTextColor || tournament?.badgeTextColor || '#FDA4AF',
+                }}
+              >
+                {tournament?.navbarBadgeText || (tournament?.customLogo ? (tournament?.organizer || 'OFICIAL') : 'SHITO-KAI')}
               </span>
               {isAdmin ? (
                 <span className="bg-amber-500/20 text-amber-300 border border-amber-400/30 text-[10px] font-bold px-2 py-0.2 rounded-full flex items-center gap-1">

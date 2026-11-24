@@ -583,7 +583,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <ShitoKaiLogo src={state.tournament?.customLogo} className="w-5 h-5" />
-            <span className="font-semibold text-slate-700">{state.tournament?.organizer || 'Shito-Kai Karate-Do'}</span>
+            <span className="font-semibold text-slate-700">{state.tournament?.organizer || state.tournament?.bannerBadgeText || 'Shito-Kai Karate-Do'}</span>
             <span>• Sistema Oficial de Competencia</span>
           </div>
           <div className="flex items-center gap-3">

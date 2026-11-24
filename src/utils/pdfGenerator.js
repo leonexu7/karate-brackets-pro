@@ -90,7 +90,7 @@ function drawHeader(doc, tournament, categoryName, tatami, pageBadge = '') {
   doc.setFontSize(7.5);
   doc.setTextColor(...COLOR_MUTED);
   doc.text(
-    `Fecha: ${tournament?.date || '2026'} | Sede: ${tournament?.venue || 'Gimnasio Oficial'} | Organización Shito-Kai Karate-Do`,
+    `Fecha: ${tournament?.date || '2026'} | Sede: ${tournament?.venue || 'Gimnasio Oficial'} | Organización ${tournament?.organizer || tournament?.bannerBadgeText || 'Shito-Kai Karate-Do'}`,
     33,
     22
   );
@@ -119,7 +119,7 @@ function drawHeader(doc, tournament, categoryName, tatami, pageBadge = '') {
 }
 
 // Dibuja el pie de página con firmas oficiales para los jueces
-function drawFooter(doc) {
+function drawFooter(doc, tournament = null) {
   const w = doc.internal.pageSize.getWidth();
   const h = doc.internal.pageSize.getHeight();
   const y = h - 14;
@@ -143,7 +143,8 @@ function drawFooter(doc) {
   doc.text('Firma Juez de Mesa / Planillero', f2X + 22.5, y + 10, { align: 'center' });
 
   // Texto central
-  doc.text('Shito-Kai Karate-Do • Documento Oficial de Competencia • Mesa de Arbitraje', w / 2, y + 10, { align: 'center' });
+  const footerOrg = tournament?.organizer || tournament?.bannerBadgeText || 'Shito-Kai Karate-Do';
+  doc.text(`${footerOrg} • Documento Oficial de Competencia • Mesa de Arbitraje`, w / 2, y + 10, { align: 'center' });
 }
 
 // Silueta sutil de karateka oficial según género (Femenil o Varonil) como marca de agua tenue
@@ -457,20 +458,20 @@ export function renderCuartetaPage(doc, cuarteta, tournament) {
   doc.text('Dojo:', podioX + 4, 139.5);
   doc.line(podioX + 14, 140, podioX + podioW - 4, 140);
 
-  // Pie oficial Shito-Kai
+  // Pie oficial
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(6);
   doc.setTextColor(...COLOR_MUTED);
-  doc.text('Shito-Kai México • 4 Medallistas', podioX + podioW / 2, 148, { align: 'center' });
+  doc.text(`${tournament?.bannerBadgeText || 'Shito-Kai México'} • 4 Medallistas`, podioX + podioW / 2, 148, { align: 'center' });
 
-  drawFooter(doc);
+  drawFooter(doc, tournament);
 }
 
 /**
  * Dibuja el panel lateral derecho con el Podio Oficial (1°, 2°, 3°, 3°) y Mesa de Control
  * siguiendo el estándar de torneos oficiales (Sportdata / WKF) con amplio espacio para rellenar a mano.
  */
-function drawOfficialPodiumPanel(doc, x, w) {
+function drawOfficialPodiumPanel(doc, x, w, tournament = null) {
   // 1. Encabezado de la Mesa
   doc.setFillColor(241, 245, 249);
   doc.setDrawColor(...COLOR_LINE);
@@ -484,7 +485,7 @@ function drawOfficialPodiumPanel(doc, x, w) {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(5.8);
   doc.setTextColor(...COLOR_MUTED);
-  doc.text('Mesa de Control • Shito-Kai', x + w / 2, 46, { align: 'center' });
+  doc.text(`Mesa de Control • ${tournament?.bannerBadgeText || 'Shito-Kai'}`, x + w / 2, 46, { align: 'center' });
 
   // 2. Caja Destacada del Campeón (1º Lugar - Oro)
   const champBoxY = 49.5;
@@ -635,7 +636,7 @@ function drawOfficialPodiumPanel(doc, x, w) {
   doc.setFont('helvetica', 'italic');
   doc.setFontSize(5.2);
   doc.setTextColor(...COLOR_MUTED);
-  doc.text('Shito-Kai México', x + w - 3.5, sigBoxY + 34, { align: 'right' });
+  doc.text(tournament?.bannerBadgeText || 'Shito-Kai México', x + w - 3.5, sigBoxY + 34, { align: 'right' });
 }
 
 /**
@@ -803,9 +804,9 @@ export function renderStandardBracketPage(doc, bracket, tournament, customBadge 
   });
 
   // Dibujar el panel oficial de Podio y Mesa de Tatami
-  drawOfficialPodiumPanel(doc, podioX, podioW);
+  drawOfficialPodiumPanel(doc, podioX, podioW, tournament);
 
-  drawFooter(doc);
+  drawFooter(doc, tournament);
 }
 
 /**
@@ -929,9 +930,9 @@ export function renderMultiPageBracket(doc, multiBracket, tournament) {
       doc.triangle(podioX - 2.5, finalExitY - 1.5, podioX - 2.5, finalExitY + 1.5, podioX, finalExitY, 'F');
 
       // Panel de Podio Oficial en Hoja 3
-      drawOfficialPodiumPanel(doc, podioX, podioW);
+      drawOfficialPodiumPanel(doc, podioX, podioW, tournament);
 
-      drawFooter(doc);
+      drawFooter(doc, tournament);
     }
   });
 }

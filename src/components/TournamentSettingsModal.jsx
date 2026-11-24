@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Settings, Calendar, MapPin, Shield, RefreshCw, Key, Trash2, Coins, AlertTriangle, Download, Scale, Users, Plus, RotateCcw, Copy, Check, Upload, Image as ImageIcon, Sliders, Palette, Lock, Clock, Layers } from 'lucide-react';
+import { X, Settings, Calendar, MapPin, Shield, RefreshCw, Key, Trash2, Coins, AlertTriangle, Download, Scale, Users, Plus, RotateCcw, Copy, Check, Upload, Image as ImageIcon, Sliders, Palette, Lock, Clock, Layers, Tag, Type } from 'lucide-react';
 import { ShitoKaiLogo } from '../assets/shitoKaiLogo';
 import sakuraTreeImg from '../assets/sakura_tree.png';
 import { DEMO_ATHLETES, DEMO_DOJOS } from '../constants/mockData';
@@ -31,6 +31,11 @@ export default function TournamentSettingsModal({
     customBg: tournament.customBg || null,
     bgOpacity: tournament.bgOpacity !== undefined ? tournament.bgOpacity : 0.20,
     bgFit: tournament.bgFit || 'contain',
+    bannerBadgeText: tournament.bannerBadgeText || 'Shito-Kai México',
+    navbarBadgeText: tournament.navbarBadgeText || 'SHITO-KAI',
+    badgeBgColor: tournament.badgeBgColor || '#FFF1F2',
+    badgeBorderColor: tournament.badgeBorderColor || '#FECDD3',
+    badgeTextColor: tournament.badgeTextColor || '#BE123C',
   });
 
   const [activeAgeTab, setActiveAgeTab] = useState('senior'); // 'senior' | '16-17' | '14-15'
@@ -350,6 +355,63 @@ export default function TournamentSettingsModal({
 
   const currentList = weightDivisions?.[activeAgeTab]?.[activeGender] || [];
 
+  const handleResetBadge = () => {
+    setForm(prev => ({
+      ...prev,
+      bannerBadgeText: 'Shito-Kai México',
+      navbarBadgeText: 'SHITO-KAI',
+      badgeBgColor: '#FFF1F2',
+      badgeBorderColor: '#FECDD3',
+      badgeTextColor: '#BE123C',
+    }));
+    showTempFeedback('Insignia y textos restablecidos a Shito-Kai oficial');
+  };
+
+  const BADGE_PRESETS = [
+    {
+      name: 'Shito-Kai Oficial',
+      badgeBgColor: '#FFF1F2',
+      badgeBorderColor: '#FECDD3',
+      badgeTextColor: '#BE123C',
+      chip: 'bg-rose-500',
+    },
+    {
+      name: 'Azul Tatami (WKF)',
+      badgeBgColor: '#EFF6FF',
+      badgeBorderColor: '#BFDBFE',
+      badgeTextColor: '#1D4ED8',
+      chip: 'bg-blue-600',
+    },
+    {
+      name: 'Verde Marcial',
+      badgeBgColor: '#ECFDF5',
+      badgeBorderColor: '#A7F3D0',
+      badgeTextColor: '#047857',
+      chip: 'bg-emerald-600',
+    },
+    {
+      name: 'Dorado / Honor',
+      badgeBgColor: '#FEFCE8',
+      badgeBorderColor: '#FEF08A',
+      badgeTextColor: '#A16207',
+      chip: 'bg-amber-500',
+    },
+    {
+      name: 'Cinturón Negro',
+      badgeBgColor: '#0F172A',
+      badgeBorderColor: '#334155',
+      badgeTextColor: '#F8FAFC',
+      chip: 'bg-slate-900',
+    },
+    {
+      name: 'Blanco / Clásico',
+      badgeBgColor: '#FFFFFF',
+      badgeBorderColor: '#CBD5E1',
+      badgeTextColor: '#0F172A',
+      chip: 'bg-white border border-slate-300',
+    },
+  ];
+
   const handleSubmit = (e) => {
     e.preventDefault();
     onSaveTournament({
@@ -367,6 +429,11 @@ export default function TournamentSettingsModal({
       customBg: form.customBg || null,
       bgOpacity: form.bgOpacity !== undefined ? parseFloat(form.bgOpacity) : 0.20,
       bgFit: form.bgFit || 'contain',
+      bannerBadgeText: form.bannerBadgeText || 'Shito-Kai México',
+      navbarBadgeText: form.navbarBadgeText || 'SHITO-KAI',
+      badgeBgColor: form.badgeBgColor || '#FFF1F2',
+      badgeBorderColor: form.badgeBorderColor || '#FECDD3',
+      badgeTextColor: form.badgeTextColor || '#BE123C',
     });
     onClose();
   };
@@ -640,6 +707,218 @@ export default function TournamentSettingsModal({
                   <span className="bg-white/85 backdrop-blur-xs text-slate-900 px-3 py-1 rounded-md text-[11px] font-bold border border-slate-300 shadow-2xs inline-block">
                     Ejemplo de legibilidad con {Math.round(form.bgOpacity * 100)}% de tono traslúcido
                   </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Identidad Superior: Textos, Insignia (Badge), Fondo y Marco */}
+          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <label className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                <Tag className="w-3.5 h-3.5 text-rose-600" />
+                <span>Textos Superiores, Insignia y Marco (Navbar y Portada)</span>
+              </label>
+              <button
+                type="button"
+                onClick={handleResetBadge}
+                className="text-[10px] text-slate-500 hover:text-rose-600 font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                title="Restablecer textos y colores originales de Shito-Kai"
+              >
+                <RotateCcw className="w-3 h-3" />
+                <span>Restablecer Shito-Kai</span>
+              </button>
+            </div>
+
+            <p className="text-[11px] text-slate-500 leading-relaxed">
+              Personaliza los <strong>2 textos superiores</strong> (insignia del banner y etiqueta de la barra superior), así como el <strong>color de fondo</strong> y el <strong>marco (borde)</strong>.
+            </p>
+
+            {/* Inputs para los 2 textos */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-white p-3 rounded-lg border border-slate-200">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1 flex items-center justify-between">
+                  <span>Texto 1: Insignia en Banner (Portada)</span>
+                </label>
+                <input
+                  type="text"
+                  value={form.bannerBadgeText}
+                  onChange={(e) => setForm({ ...form, bannerBadgeText: e.target.value })}
+                  placeholder="Ej. Shito-Kai México, Shotokan México, etc."
+                  className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-md outline-hidden focus:ring-1 focus:ring-rose-500 focus:border-rose-500 font-medium"
+                />
+                <span className="text-[10px] text-slate-400 mt-0.5 block">Se muestra en la cabecera del portal de profesores.</span>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1 flex items-center justify-between">
+                  <span>Texto 2: Barra Superior (Navbar)</span>
+                  <button
+                    type="button"
+                    onClick={() => setForm(prev => ({ ...prev, navbarBadgeText: (prev.bannerBadgeText || '').toUpperCase() }))}
+                    className="text-[10px] text-rose-600 hover:text-rose-700 font-semibold underline cursor-pointer"
+                    title="Copiar texto del banner en mayúsculas"
+                  >
+                    Copiar del Texto 1
+                  </button>
+                </label>
+                <input
+                  type="text"
+                  value={form.navbarBadgeText}
+                  onChange={(e) => setForm({ ...form, navbarBadgeText: e.target.value })}
+                  placeholder="Ej. SHITO-KAI, SHOTOKAN, etc."
+                  className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-md outline-hidden focus:ring-1 focus:ring-rose-500 focus:border-rose-500 font-medium uppercase"
+                />
+                <span className="text-[10px] text-slate-400 mt-0.5 block">Se muestra en la barra oscura superior fija.</span>
+              </div>
+            </div>
+
+            {/* Configuración de Colores: Fondo, Marco y Texto */}
+            <div className="bg-white p-3 rounded-lg border border-slate-200 space-y-3">
+              <div className="text-[11px] font-bold text-slate-800 flex items-center gap-1.5">
+                <Palette className="w-3.5 h-3.5 text-rose-600" />
+                <span>Colores de Fondo, Marco y Letra:</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {/* Color de Fondo */}
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-bold text-slate-600 uppercase">
+                    Color de Fondo
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={form.badgeBgColor}
+                      onChange={(e) => setForm({ ...form, badgeBgColor: e.target.value })}
+                      className="w-8 h-8 rounded border border-slate-300 cursor-pointer p-0.5 shrink-0 bg-transparent"
+                    />
+                    <input
+                      type="text"
+                      value={form.badgeBgColor}
+                      onChange={(e) => setForm({ ...form, badgeBgColor: e.target.value })}
+                      className="w-full px-2 py-1 text-xs font-mono border border-slate-300 rounded outline-hidden focus:border-rose-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Color del Marco / Borde */}
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-bold text-slate-600 uppercase">
+                    Color del Marco (Borde)
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={form.badgeBorderColor}
+                      onChange={(e) => setForm({ ...form, badgeBorderColor: e.target.value })}
+                      className="w-8 h-8 rounded border border-slate-300 cursor-pointer p-0.5 shrink-0 bg-transparent"
+                    />
+                    <input
+                      type="text"
+                      value={form.badgeBorderColor}
+                      onChange={(e) => setForm({ ...form, badgeBorderColor: e.target.value })}
+                      className="w-full px-2 py-1 text-xs font-mono border border-slate-300 rounded outline-hidden focus:border-rose-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Color del Texto */}
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-bold text-slate-600 uppercase">
+                    Color de Letra
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={form.badgeTextColor}
+                      onChange={(e) => setForm({ ...form, badgeTextColor: e.target.value })}
+                      className="w-8 h-8 rounded border border-slate-300 cursor-pointer p-0.5 shrink-0 bg-transparent"
+                    />
+                    <input
+                      type="text"
+                      value={form.badgeTextColor}
+                      onChange={(e) => setForm({ ...form, badgeTextColor: e.target.value })}
+                      className="w-full px-2 py-1 text-xs font-mono border border-slate-300 rounded outline-hidden focus:border-rose-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Paleta rápida de combinaciones predeterminadas */}
+              <div className="pt-1">
+                <span className="text-[10px] text-slate-500 font-bold block mb-1.5">
+                  Combinaciones Rápidas Recomendadas:
+                </span>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {BADGE_PRESETS.map((p) => (
+                    <button
+                      key={p.name}
+                      type="button"
+                      onClick={() => setForm(prev => ({
+                        ...prev,
+                        badgeBgColor: p.badgeBgColor,
+                        badgeBorderColor: p.badgeBorderColor,
+                        badgeTextColor: p.badgeTextColor,
+                      }))}
+                      className="px-2 py-1 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded text-[10px] font-semibold border border-slate-200 flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <span className={`w-2.5 h-2.5 rounded-full ${p.chip}`} />
+                      <span>{p.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* VISTA PREVIA EN VIVO DE AMBOS TEXTOS */}
+            <div className="bg-slate-100 p-3 rounded-lg border border-slate-200 space-y-2">
+              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">
+                Vista Previa en Tiempo Real de Ambos Textos:
+              </span>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {/* Preview 1: Portada (Fondo claro) */}
+                <div
+                  className="bg-white p-3 rounded-lg border shadow-2xs space-y-1 transition-all"
+                  style={{ borderColor: form.badgeBorderColor }}
+                >
+                  <span className="text-[9px] text-slate-400 font-bold block">1. En Banner de Profesores:</span>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-md border shadow-2xs transition-all inline-block"
+                      style={{
+                        backgroundColor: form.badgeBgColor,
+                        borderColor: form.badgeBorderColor,
+                        color: form.badgeTextColor,
+                      }}
+                    >
+                      {form.bannerBadgeText || 'Texto Superior'}
+                    </span>
+                  </div>
+                  <span className="text-xs font-bold text-slate-800 font-serif block truncate">
+                    {form.name || 'Nombre del Torneo'}
+                  </span>
+                </div>
+
+                {/* Preview 2: Navbar (Fondo oscuro) */}
+                <div className="bg-slate-900 p-3 rounded-lg border-b-2 shadow-2xs space-y-1 transition-all" style={{ borderBottomColor: form.badgeBorderColor }}>
+                  <span className="text-[9px] text-slate-400 font-bold block">2. En Barra Superior (Navbar):</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-white truncate max-w-[120px]">
+                      {form.name || 'Torneo'}
+                    </span>
+                    <span
+                      className="text-[10px] border px-1.5 py-0.2 rounded font-serif truncate max-w-[140px] font-bold shadow-2xs transition-all inline-block"
+                      style={{
+                        backgroundColor: form.badgeBgColor,
+                        borderColor: form.badgeBorderColor,
+                        color: form.badgeTextColor,
+                      }}
+                    >
+                      {form.navbarBadgeText || 'OFICIAL'}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>

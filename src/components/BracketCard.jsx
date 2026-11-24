@@ -244,7 +244,7 @@ export default function BracketCard({ bracket, tournament }) {
             </div>
             <div className="flex items-center justify-between md:justify-end gap-3 text-[11px] text-slate-500">
               <span>Hora Cierre: <strong>[____:____]</strong></span>
-              <span className="bg-slate-200/60 px-2 py-0.5 rounded text-[10px] font-medium">Validado Shito-Kai</span>
+              <span className="bg-slate-200/60 px-2 py-0.5 rounded text-[10px] font-medium">Validado {tournament?.bannerBadgeText || 'Shito-Kai'}</span>
             </div>
           </div>
         </div>
@@ -257,7 +257,10 @@ export default function BracketCard({ bracket, tournament }) {
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden relative">
       {/* Cabecera de la Gráfica */}
-      <div className="bg-slate-900 text-white px-5 py-3 border-b-2 border-rose-500 flex flex-wrap items-center justify-between gap-3">
+      <div
+        className="bg-slate-900 text-white px-5 py-3 border-b-2 flex flex-wrap items-center justify-between gap-3 transition-colors"
+        style={{ borderBottomColor: tournament?.badgeBorderColor || '#f43f5e' }}
+      >
         <div className="flex items-center gap-3">
           <ShitoKaiLogo src={tournament?.customLogo} className="w-7 h-7" />
           <div>

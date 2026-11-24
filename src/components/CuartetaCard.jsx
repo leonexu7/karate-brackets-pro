@@ -44,8 +44,11 @@ export default function CuartetaCard({ cuarteta, tournament, onMatchWinner }) {
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden relative">
-      {/* Cabecera de la Cuarteta con Shito-Kai */}
-      <div className="bg-slate-900 text-white px-5 py-3 border-b-2 border-rose-500 flex flex-wrap items-center justify-between gap-2">
+      {/* Cabecera de la Cuarteta */}
+      <div
+        className="bg-slate-900 text-white px-5 py-3 border-b-2 flex flex-wrap items-center justify-between gap-2 transition-colors"
+        style={{ borderBottomColor: tournament?.badgeBorderColor || '#f43f5e' }}
+      >
         <div className="flex items-center gap-3">
           <ShitoKaiLogo src={tournament?.customLogo} className="w-6 h-6" />
           <span className="w-5 h-5 rounded-full bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center">
@@ -262,7 +265,7 @@ export default function CuartetaCard({ cuarteta, tournament, onMatchWinner }) {
               <span>{isFemale ? 'Rama Femenil' : 'Rama Varonil'}</span>
             </div>
             <div className="text-[9px] text-slate-500 font-medium mt-1">
-              Shito-Kai • Cuarteta Infantil
+              {tournament?.bannerBadgeText || 'Shito-Kai'} • Cuarteta Infantil
             </div>
           </div>
         </div>

@@ -540,8 +540,9 @@ export default function TeacherRegistrationView({
   const totalGrandPayment = totalSingleFee + totalDoubleFee;
 
   const handleSendWhatsAppReport = () => {
+    const orgTitle = (tournament?.bannerBadgeText || 'SHITO-KAI MÉXICO').toUpperCase();
     const text = encodeURIComponent(
-      `🥋 *CÉDULA DE INSCRIPCIÓN Y COBRO - SHITO-KAI MÉXICO*\n\n` +
+      `🥋 *CÉDULA DE INSCRIPCIÓN Y COBRO - ${orgTitle}*\n\n` +
       `• *Dojo:* ${dojoInfo.name || 'Sin especificar'}\n` +
       `• *Sensei:* ${dojoInfo.sensei || 'Sin especificar'}\n` +
       `• *Ciudad:* ${dojoInfo.city || 'S/D'}\n` +
@@ -560,7 +561,12 @@ export default function TeacherRegistrationView({
     <div className="relative min-h-[calc(100vh-140px)]">
       <div className="relative z-10 max-w-4xl mx-auto space-y-6 pb-12 px-2 sm:px-0">
         {/* BANNER PRINCIPAL CON ESCUDO SHITO-KAI ROJO Y FONDO DEL TORNEO */}
-        <div className="bg-white/95 backdrop-blur-xs rounded-3xl border border-rose-200/90 shadow-md overflow-hidden relative">
+        <div
+          className="bg-white/95 backdrop-blur-xs rounded-3xl border shadow-md overflow-hidden relative transition-colors"
+          style={{
+            borderColor: tournament?.badgeBorderColor || 'rgba(254, 205, 211, 0.9)',
+          }}
+        >
           {/* FONDO EN LA PARTE DERECHA DEL BANNER */}
           <div className="absolute right-0 top-0 bottom-0 flex items-center pr-1 sm:pr-4 pointer-events-none opacity-85">
             <img
@@ -577,8 +583,15 @@ export default function TeacherRegistrationView({
               <ShitoKaiLogo src={tournament?.customLogo} className="w-12 h-12 sm:w-14 sm:h-14 drop-shadow-sm shrink-0" />
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold tracking-wider text-rose-700 uppercase px-2 py-0.5 bg-rose-50 border border-rose-200 rounded-md">
-                    Shito-Kai México
+                  <span
+                    className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-md border transition-all shadow-2xs"
+                    style={{
+                      backgroundColor: tournament?.badgeBgColor || '#FFF1F2',
+                      borderColor: tournament?.badgeBorderColor || '#FECDD3',
+                      color: tournament?.badgeTextColor || '#BE123C',
+                    }}
+                  >
+                    {tournament?.bannerBadgeText || 'Shito-Kai México'}
                   </span>
                 </div>
                 <h1 className="text-lg sm:text-2xl font-bold font-serif tracking-wide text-slate-900 mt-1">

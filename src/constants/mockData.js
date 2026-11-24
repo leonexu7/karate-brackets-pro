@@ -16,6 +16,11 @@ export const INITIAL_TOURNAMENT = {
   customBg: null, // Imagen de fondo personalizada (data URL Base64) o null para predeterminado (Cerezo Sakura)
   bgOpacity: 0.20, // Nivel de opacidad / traslucidez del fondo (de 0.05 a 0.85, default 0.20)
   bgFit: 'contain', // 'contain' (marca de agua en esquina) o 'cover' (cubrir pantalla completa)
+  bannerBadgeText: 'Shito-Kai México', // Texto superior en la portada / banner de profesores
+  navbarBadgeText: 'SHITO-KAI', // Texto superior en la barra de navegación (Navbar)
+  badgeBgColor: '#FFF1F2', // Color de fondo de la insignia superior (default rose-50)
+  badgeBorderColor: '#FECDD3', // Color del marco / borde de la insignia superior (default rose-200)
+  badgeTextColor: '#BE123C', // Color de texto de la insignia superior (default rose-700)
 };
 
 // Iniciar con 0 dojos, 0 atletas y 0 equipos (totalmente limpio para registros reales)
