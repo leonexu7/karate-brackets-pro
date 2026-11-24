@@ -1,25 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { Trophy, Printer, Filter, Search, Award, ArrowDownUp, Shield, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Trophy, Printer, Filter, Search, Award, ArrowDownUp, Shield, AlertCircle, ChevronLeft, ChevronRight, Zap } from 'lucide-react';
 import CuartetaCard from './CuartetaCard';
 import BracketCard from './BracketCard';
 import { generateFullTournamentPDF } from '../utils/pdfGenerator';
-
-function getBracketAgeRank(b) {
-  const name = (b.categoryName || '').toLowerCase();
-  const key = (b.categoryKey || '').toLowerCase();
-  if (name.includes('-5') || key.includes('u5')) return 5;
-  if (name.includes('6-7') || key.includes('6-7')) return 7;
-  if (name.includes('8-9') || key.includes('8-9')) return 9;
-  if (name.includes('10-11') || key.includes('10-11')) return 11;
-  if (name.includes('12-13') || key.includes('12-13')) return 13;
-  if (name.includes('14-15') || key.includes('14-15')) return 15;
-  if (name.includes('16-17') || key.includes('16-17')) return 17;
-  if (name.includes('18-20') || key.includes('18-20') || key.includes('u21')) return 20;
-  if (name.includes('senior') || name.includes('+18') || key.includes('senior')) return 25;
-  if (name.includes('+35') || key.includes('master35')) return 35;
-  if (name.includes('+45') || key.includes('master45')) return 45;
-  return 15;
-}
+import { getBracketAgeRank, countBracketPages } from '../utils/bracketEngine';
+import PrintDispatcherModal from './PrintDispatcherModal';
 
 export default function BracketsView({
   brackets,
@@ -27,6 +12,7 @@ export default function BracketsView({
   onDownloadAllPDF,
   isGeneratingPDF,
   pdfProgress,
+  onOpenPrintDispatcher,
 }) {
   const [filterTatami, setFilterTatami] = useState('all');
   const [filterType, setFilterType] = useState('all'); // 'all', 'cuarteta', 'standard'
@@ -34,6 +20,9 @@ export default function BracketsView({
   const [filterModality, setFilterModality] = useState('all'); // 'all', 'kata', 'kumite'
   const [sortOrder, setSortOrder] = useState('age_asc'); // 'age_asc', 'age_desc', 'name_asc', 'tatami'
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Modal de despacho de impresión interno
+  const [isLocalDispatcherOpen, setIsLocalDispatcherOpen] = useState(false);
 
   // Paginación para alto rendimiento con más de 200 competidores
   const [currentPage, setCurrentPage] = useState(1);
@@ -119,6 +108,7 @@ export default function BracketsView({
 
   const cuartetasCount = brackets.filter(b => b.type === 'cuarteta').length;
   const standardCount = brackets.filter(b => b.type !== 'cuarteta').length;
+  const totalPagesCount = useMemo(() => countBracketPages(brackets), [brackets]);
 
   return (
     <div className="space-y-6">
@@ -205,32 +195,31 @@ export default function BracketsView({
           </select>
         </div>
 
-        {/* Botones de Descarga PDF */}
+        {/* Botones de Descarga PDF y Despacho */}
         <div className="flex flex-wrap items-center gap-2">
           {filteredBrackets.length > 0 && filteredBrackets.length < brackets.length && (
             <button
               type="button"
               onClick={handleDownloadFilteredPDF}
               disabled={isGeneratingFilteredPDF || isGeneratingPDF}
-              className="px-3.5 py-2 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-semibold shadow-xs flex items-center gap-2 transition-colors disabled:opacity-50 cursor-pointer"
+              className="px-3.5 py-2 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer"
               title="Descargar en PDF únicamente las gráficas filtradas en pantalla"
             >
               <Printer className="w-4 h-4 text-rose-400" />
               <span>
-                {isGeneratingFilteredPDF ? `Procesando (${filteredPDFProgress}%)...` : `Descargar Selección (${filteredBrackets.length} Gráficas)`}
+                {isGeneratingFilteredPDF ? `Procesando (${filteredPDFProgress}%)...` : `Descargar Filtro (${filteredBrackets.length})`}
               </span>
             </button>
           )}
 
           <button
-            onClick={onDownloadAllPDF}
-            disabled={isGeneratingPDF || isGeneratingFilteredPDF || brackets.length === 0}
-            className="px-4 py-2 bg-aka hover:bg-aka-dark text-white rounded-lg text-xs font-semibold shadow-xs flex items-center gap-2 transition-colors disabled:opacity-50 cursor-pointer"
+            type="button"
+            onClick={() => onOpenPrintDispatcher ? onOpenPrintDispatcher() : setIsLocalDispatcherOpen(true)}
+            className="px-4 py-2 bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white rounded-lg text-xs font-bold shadow-sm flex items-center gap-2 transition-all cursor-pointer"
+            title="Abrir centro de despacho: Imprimir por turno (mañana/tarde), por tatami o anti-saturación"
           >
-            <Printer className="w-4 h-4" />
-            <span>
-              {isGeneratingPDF ? `Procesando Cuaderno (${pdfProgress}%)...` : `Descargar Cuaderno Completo (${brackets.length} Gráficas)`}
-            </span>
+            <Printer className="w-4 h-4 text-amber-300" />
+            <span>Centro de Impresión y Despacho ({totalPagesCount} Hojas)</span>
           </button>
         </div>
       </div>
@@ -310,6 +299,15 @@ export default function BracketsView({
           )}
         </div>
       )}
+
+      {/* Modal de Despacho e Impresión Rápida de Tatamis */}
+      <PrintDispatcherModal
+        isOpen={isLocalDispatcherOpen}
+        onClose={() => setIsLocalDispatcherOpen(false)}
+        brackets={brackets}
+        tournament={tournament}
+        filteredBrackets={filteredBrackets}
+      />
     </div>
   );
 }

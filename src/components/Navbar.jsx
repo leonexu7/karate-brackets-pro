@@ -23,6 +23,7 @@ export default function Navbar({
   onOpenTreasury,
   isCloudConnected,
   onOpenCloudConfig,
+  onOpenPrintDispatcher,
 }) {
   return (
     <header className="bg-white border-b border-tatami-200 sticky top-0 z-40 shadow-xs relative">
@@ -247,15 +248,16 @@ export default function Navbar({
               <input type="file" accept=".json" onChange={onImportJSON} className="hidden" />
             </label>
 
-            {/* BOTÓN MAESTRO: COLOR SUAVE Y ATRACTIVO (Coral suave, no vino) */}
+            {/* BOTÓN MAESTRO: CENTRO DE DESPACHO E IMPRESIÓN */}
             <button
-              onClick={onDownloadAllPDF}
+              onClick={onOpenPrintDispatcher || onDownloadAllPDF}
               disabled={isGeneratingPDF || stats.totalBrackets === 0}
-              className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white text-xs font-semibold rounded-md shadow-xs flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3.5 py-1.5 bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white text-xs font-bold rounded-md shadow-xs flex items-center gap-1.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              title="Abrir centro de despacho: Imprimir por turno de horario, por tatami o anti-saturación"
             >
-              <Printer className="w-3.5 h-3.5" />
+              <Printer className="w-3.5 h-3.5 text-amber-300" />
               <span>
-                {isGeneratingPDF ? `Generando (${pdfProgress}%)...` : 'Imprimir Todo en PDF'}
+                {isGeneratingPDF ? `Generando (${pdfProgress}%)...` : 'Centro de Impresión'}
               </span>
             </button>
           </div>

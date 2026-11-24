@@ -811,9 +811,11 @@ export function renderStandardBracketPage(doc, bracket, tournament, customBadge 
 
 /**
  * Renderiza una gráfica Multi-Hoja conectada (ej. 3 o 5 hojas para categorías grandes de adolescentes)
+ * Permite reverseInternal para charolas de salida boca arriba
  */
-export function renderMultiPageBracket(doc, multiBracket, tournament) {
-  const pages = multiBracket.pages || [];
+export function renderMultiPageBracket(doc, multiBracket, tournament, reverseInternal = false) {
+  const rawPages = multiBracket.pages || [];
+  const pages = reverseInternal ? [...rawPages].reverse() : rawPages;
   const pouleCount = multiBracket.pouleCount || 2;
 
   pages.forEach((page, index) => {
@@ -942,8 +944,14 @@ export function renderMultiPageBracket(doc, multiBracket, tournament) {
 
 /**
  * Genera el documento PDF completo con todas las llaves del torneo
+ * Opciones soportadas:
+ * - reversePages: boolean (invierte el orden para charolas boca arriba / Face-Up)
+ * - filename: string (nombre personalizado del archivo descargado)
  */
-export async function generateFullTournamentPDF(brackets, tournament, onProgress = () => {}) {
+export async function generateFullTournamentPDF(brackets, tournament, onProgress = () => {}, options = {}) {
+  const reversePages = !!options.reversePages;
+  const customFilename = options.filename;
+
   const doc = new jsPDF({
     orientation: 'landscape',
     unit: 'mm',
@@ -951,26 +959,28 @@ export async function generateFullTournamentPDF(brackets, tournament, onProgress
     compress: true,
   });
 
-  const total = brackets.length;
+  const orderedBrackets = reversePages ? [...brackets].reverse() : [...brackets];
+  const total = orderedBrackets.length;
 
   for (let i = 0; i < total; i++) {
-    const item = brackets[i];
+    const item = orderedBrackets[i];
     if (i > 0) doc.addPage('letter', 'landscape');
 
     if (item.type === 'cuarteta') {
       renderCuartetaPage(doc, item, tournament);
     } else if (item.type === 'multipage') {
-      renderMultiPageBracket(doc, item, tournament);
+      renderMultiPageBracket(doc, item, tournament, reversePages);
     } else {
       renderStandardBracketPage(doc, item, tournament);
     }
 
     onProgress(Math.round(((i + 1) / total) * 100));
-    await new Promise(r => setTimeout(r, 10));
+    await new Promise(r => setTimeout(r, 4));
   }
 
-  const safeName = (tournament?.name || 'Torneo_ShitoKai').replace(/\s+/g, '_');
-  doc.save(`${safeName}_Graficas_Oficiales_Tatami.pdf`);
+  const defaultName = `${(tournament?.name || 'Torneo_ShitoKai').replace(/\s+/g, '_')}_Graficas_Oficiales_Tatami`;
+  const finalFilename = customFilename || defaultName;
+  doc.save(finalFilename.endsWith('.pdf') ? finalFilename : `${finalFilename}.pdf`);
 }
 
 /**

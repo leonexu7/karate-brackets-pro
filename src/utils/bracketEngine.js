@@ -564,14 +564,90 @@ export function generateMultiPageBracket(categoryKey, categoryName, athletes, ta
 }
 
 /**
+ * Calcula el rango de edad cronológico para ordenar llaves y categorías de menor a mayor
+ * -5 años -> 5
+ * 6-7 años -> 7
+ * 8-9 años -> 9
+ * 10-11 años -> 11
+ * 12-13 años -> 13
+ * 14-15 años -> 15
+ * 16-17 años -> 17
+ * 18-20 años -> 20
+ * Senior / +18 -> 25
+ * Master +35 -> 35
+ * Master +45 -> 45
+ */
+export function getBracketAgeRank(bracketOrCategory) {
+  if (!bracketOrCategory) return 15;
+  const divId = bracketOrCategory.ageDivision?.id || '';
+  if (divId === 'u5') return 5;
+  if (divId === '6-7') return 7;
+  if (divId === '8-9') return 9;
+  if (divId === '10-11') return 11;
+  if (divId === '12-13') return 13;
+  if (divId === '14-15') return 15;
+  if (divId === '16-17') return 17;
+  if (divId === '18-20') return 20;
+  if (divId === 'senior') return 25;
+  if (divId === 'masters35') return 35;
+  if (divId === 'masters45') return 45;
+
+  const s = `${bracketOrCategory.categoryName || ''} ${bracketOrCategory.name || ''} ${bracketOrCategory.categoryKey || ''} ${bracketOrCategory.key || ''}`.toLowerCase();
+
+  // Comprobar desde categorías de mayor edad hacia menores para evitar colisiones
+  // (por ejemplo, evitar que '14-15 años (-52 kg)' coincida con '-5' de infantiles)
+  if (s.includes('master45') || s.includes('+45')) return 45;
+  if (s.includes('master35') || s.includes('+35')) return 35;
+  if (s.includes('senior') || (s.includes('+18') && !s.includes('18-20'))) return 25;
+  if (s.includes('18-20') || s.includes('u21')) return 20;
+  if (s.includes('16-17') || s.includes('junior')) return 17;
+  if (s.includes('14-15') || s.includes('cadete')) return 15;
+  if (s.includes('12-13') || s.includes('u14')) return 13;
+  if (s.includes('10-11') || s.includes('u12')) return 11;
+  if (s.includes('8-9')) return 9;
+  if (s.includes('6-7')) return 7;
+  if (s.includes('u5') || /(?:^|[\s_])-?5(?:\s|a|ñ|$)/i.test(s)) return 5;
+  return 15;
+}
+
+/**
+ * Cuenta el total real de hojas físicas de impresión considerando gráficas multi-hoja
+ */
+export function countBracketPages(bracketsList) {
+  if (!Array.isArray(bracketsList)) return 0;
+  return bracketsList.reduce((acc, b) => {
+    if (b.type === 'multipage') {
+      return acc + (b.totalPages || (b.pages ? b.pages.length : 2));
+    }
+    return acc + 1;
+  }, 0);
+}
+
+/**
  * Generador principal: Recibe las categorías y genera la lista completa de gráficas listas para imprimir
+ * Garantiza ORDEN CRONOLÓGICO ESTRICTO: Los niños pequeños (-5, 6-7, 8-9) se generan PRIMERO
  */
 export function buildTournamentBrackets(categoriesMap, tatamisCount = 3) {
   const allBrackets = [];
   let tatamiIndex = 1;
   const pairTatamiMap = {};
 
-  Object.values(categoriesMap).forEach(category => {
+  // Ordenar categorías cronológicamente por edad antes de asignar tatamis y generar llaves
+  const sortedCategories = Object.values(categoriesMap || {})
+    .filter(category => (category.athletes || []).length > 0)
+    .sort((a, b) => {
+      const ageDiff = getBracketAgeRank(a) - getBracketAgeRank(b);
+      if (ageDiff !== 0) return ageDiff;
+
+      // Kata antes de Kumite dentro del mismo rango de edad
+      const aIsKumite = (a.name || '').toLowerCase().includes('kumite') ? 1 : 0;
+      const bIsKumite = (b.name || '').toLowerCase().includes('kumite') ? 1 : 0;
+      if (aIsKumite !== bIsKumite) return aIsKumite - bIsKumite;
+
+      return (a.name || '').localeCompare(b.name || '');
+    });
+
+  sortedCategories.forEach(category => {
     const athletes = category.athletes || [];
     if (athletes.length === 0) return;
 
@@ -610,6 +686,21 @@ export function buildTournamentBrackets(categoriesMap, tatamisCount = 3) {
       std.pairKey = category.pairKey || null;
       allBrackets.push(std);
     }
+  });
+
+  // Ordenar el resultado final para garantizar 100% que los infantes van primero
+  allBrackets.sort((a, b) => {
+    const ageDiff = getBracketAgeRank(a) - getBracketAgeRank(b);
+    if (ageDiff !== 0) return ageDiff;
+
+    const aIsKumite = (a.categoryName || '').toLowerCase().includes('kumite') ? 1 : 0;
+    const bIsKumite = (b.categoryName || '').toLowerCase().includes('kumite') ? 1 : 0;
+    if (aIsKumite !== bIsKumite) return aIsKumite - bIsKumite;
+
+    const nameDiff = (a.categoryName || '').localeCompare(b.categoryName || '');
+    if (nameDiff !== 0) return nameDiff;
+
+    return (a.groupIndex || 1) - (b.groupIndex || 1);
   });
 
   return allBrackets;

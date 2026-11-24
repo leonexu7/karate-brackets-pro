@@ -42,6 +42,7 @@ import { generateFullTournamentPDF } from './utils/pdfGenerator';
 import { INITIAL_TOURNAMENT, DEMO_ATHLETES, DEMO_DOJOS } from './constants/mockData';
 import { ShitoKaiLogo } from './assets/shitoKaiLogo';
 import sakuraTreeImg from './assets/sakura_tree.png';
+import PrintDispatcherModal from './components/PrintDispatcherModal';
 
 export default function App() {
   const [state, setState] = useState(() => {
@@ -71,6 +72,7 @@ export default function App() {
   const [isTreasuryModalOpen, setIsTreasuryModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isCloudModalOpen, setIsCloudModalOpen] = useState(false);
+  const [isPrintDispatcherOpen, setIsPrintDispatcherOpen] = useState(false);
 
   // Estado de conexión a la Nube (Google Firebase 24/7)
   const [isCloudActive, setIsCloudActive] = useState(() => isCloudConfigured());
@@ -519,6 +521,7 @@ export default function App() {
         onOpenShareLink={() => setIsShareModalOpen(true)}
         isCloudConnected={isCloudActive}
         onOpenCloudConfig={() => setIsCloudModalOpen(true)}
+        onOpenPrintDispatcher={() => setIsPrintDispatcherOpen(true)}
       />
 
       {/* Contenido Principal */}
@@ -545,6 +548,7 @@ export default function App() {
                 onDownloadAllPDF={handleDownloadAllPDF}
                 isGeneratingPDF={isGeneratingPDF}
                 pdfProgress={pdfProgress}
+                onOpenPrintDispatcher={() => setIsPrintDispatcherOpen(true)}
               />
             )}
 
@@ -671,6 +675,14 @@ export default function App() {
         isOpen={isCloudModalOpen}
         onClose={() => setIsCloudModalOpen(false)}
         onConfigChanged={(connected) => setIsCloudActive(connected)}
+      />
+
+      {/* Centro de Impresión y Despacho de Tatamis */}
+      <PrintDispatcherModal
+        isOpen={isPrintDispatcherOpen}
+        onClose={() => setIsPrintDispatcherOpen(false)}
+        brackets={brackets}
+        tournament={state.tournament}
       />
     </div>
   );
