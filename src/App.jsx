@@ -18,6 +18,8 @@ import {
   cloudRegisterBatch,
   cloudUpdateAthlete,
   cloudDeleteAthlete,
+  cloudSaveDojo,
+  cloudDeleteDojo,
   cloudSaveTournamentSettings,
   cloudResetToZero
 } from './services/firebase';
@@ -94,8 +96,8 @@ export default function App() {
           setState(prev => ({
             ...prev,
             tournament: cloudData.tournament ? { ...prev.tournament, ...cloudData.tournament } : prev.tournament,
-            athletes: cloudData.athletes || prev.athletes,
-            dojos: cloudData.dojos || prev.dojos,
+            athletes: Array.isArray(cloudData.athletes) ? cloudData.athletes : prev.athletes,
+            dojos: Array.isArray(cloudData.dojos) ? cloudData.dojos : prev.dojos,
           }));
         },
         (err) => {
@@ -299,7 +301,7 @@ export default function App() {
   };
 
   // --- Handlers de Administración de Atletas ---
-  const handleSaveAthlete = (athlete) => {
+  const handleSaveAthlete = async (athlete) => {
     setState(prev => {
       const exists = prev.athletes.some(a => a.id === athlete.id);
       const updated = exists
@@ -307,14 +309,30 @@ export default function App() {
         : [athlete, ...prev.athletes];
       return { ...prev, athletes: updated };
     });
+
+    if (isCloudActive) {
+      try {
+        await cloudUpdateAthlete(athlete);
+      } catch (err) {
+        console.warn('Error sincronizando atleta en Firebase:', err);
+      }
+    }
   };
 
-  const handleDeleteAthlete = (id) => {
+  const handleDeleteAthlete = async (id) => {
     if (window.confirm('¿Deseas eliminar a este competidor de la lista oficial?')) {
       setState(prev => ({
         ...prev,
         athletes: prev.athletes.filter(a => a.id !== id),
       }));
+
+      if (isCloudActive) {
+        try {
+          await cloudDeleteAthlete(id);
+        } catch (err) {
+          console.warn('Error eliminando atleta de Firebase:', err);
+        }
+      }
     }
   };
 
@@ -337,23 +355,44 @@ export default function App() {
   };
 
   // --- Handlers de Dojos ---
-  const handleAddDojo = (dojo) => {
+  const handleAddDojo = async (dojo) => {
     setState(prev => ({ ...prev, dojos: [...prev.dojos, dojo] }));
+    if (isCloudActive) {
+      try {
+        await cloudSaveDojo(dojo);
+      } catch (err) {
+        console.warn('Error guardando dojo en Firebase:', err);
+      }
+    }
   };
 
-  const handleEditDojo = (dojo) => {
+  const handleEditDojo = async (dojo) => {
     setState(prev => ({
       ...prev,
       dojos: prev.dojos.map(d => d.id === dojo.id ? dojo : d),
     }));
+    if (isCloudActive) {
+      try {
+        await cloudSaveDojo(dojo);
+      } catch (err) {
+        console.warn('Error actualizando dojo en Firebase:', err);
+      }
+    }
   };
 
-  const handleDeleteDojo = (id) => {
+  const handleDeleteDojo = async (id) => {
     if (window.confirm('¿Deseas eliminar este dojo? Los atletas permanecerán registrados.')) {
       setState(prev => ({
         ...prev,
         dojos: prev.dojos.filter(d => d.id !== id),
       }));
+      if (isCloudActive) {
+        try {
+          await cloudDeleteDojo(id);
+        } catch (err) {
+          console.warn('Error eliminando dojo de Firebase:', err);
+        }
+      }
     }
   };
 
@@ -405,26 +444,25 @@ export default function App() {
     e.target.value = '';
   };
 
-  // --- Vaciar a 0 absoluto ---
+  // --- Vaciar a 0 absoluto (Limpia local y Nube Firebase) ---
   const handleResetAllToZero = async () => {
-    if (window.confirm('¿Estás seguro de vaciar a 0 atletas? Se limpiará toda la lista de competidores.')) {
-      const fresh = forcePurgeToZero();
-      if (isCloudActive) {
-        try {
-          await cloudResetToZero();
-        } catch (err) {
-          console.warn('Error purgando nube Firebase:', err);
-        }
-      } else {
-        try {
-          await remoteResetToZero();
-        } catch (err) {
-          console.warn('Error purgando servidor remoto:', err);
-        }
-      }
-      setState(fresh);
-      setIsSettingsModalOpen(false);
+    let cloudResult = null;
+    try {
+      cloudResult = await cloudResetToZero();
+    } catch (err) {
+      console.warn('Error purgando nube Firebase:', err);
     }
+
+    try {
+      await remoteResetToZero();
+    } catch (err) {
+      console.warn('Error purgando servidor remoto:', err);
+    }
+
+    const fresh = forcePurgeToZero();
+    setState(fresh);
+    saveState(fresh);
+    return cloudResult || { success: true };
   };
 
   const handleLoadDemoAthletes = () => {

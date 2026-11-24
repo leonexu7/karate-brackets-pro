@@ -28,7 +28,7 @@ export function loadTournamentState() {
     const parsed = JSON.parse(raw);
     // Asegurar que si quedaron atletas con IDs de demo, se descarten
     const cleanAthletes = (parsed.athletes || []).filter(a =>
-      a && a.id && !a.id.startsWith('demo-') && !a.id.startsWith('ath-')
+      a && a.id && !a.id.startsWith('demo-')
     );
 
     const tournamentData = {
@@ -78,7 +78,12 @@ export function saveTournamentState(state) {
 
 export function forcePurgeToZero() {
   try {
-    localStorage.clear();
+    const cloudConfig = localStorage.getItem('karate_firebase_cloud_config_v1');
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem('karate_brackets_pro_v1');
+    localStorage.removeItem('karate_brackets_pro_v2');
+    localStorage.removeItem('karate_coach_saved_dojo');
+
     const freshState = {
       tournament: INITIAL_TOURNAMENT,
       dojos: [],
@@ -88,9 +93,20 @@ export function forcePurgeToZero() {
       isCleanZero: true,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(freshState));
+    if (cloudConfig) {
+      localStorage.setItem('karate_firebase_cloud_config_v1', cloudConfig);
+    }
     return freshState;
   } catch (err) {
     console.error('Error purgando a cero:', err);
+    return {
+      tournament: INITIAL_TOURNAMENT,
+      dojos: [],
+      athletes: [],
+      teams: [],
+      bracketResults: {},
+      isCleanZero: true,
+    };
   }
 }
 

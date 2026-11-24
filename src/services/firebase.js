@@ -12,7 +12,7 @@ import {
   getDocs,
   query
 } from '@firebase/firestore';
-import { normalizeDojoKey } from '../utils/dojoHelper';
+import { normalizeDojoKey } from '../utils/dojoHelper.js';
 
 const STORAGE_CONFIG_KEY = 'karate_firebase_cloud_config_v1';
 
@@ -318,6 +318,39 @@ export async function cloudDeleteAthlete(athleteId) {
   }
 }
 
+// --- GUARDAR O ACTUALIZAR DOJO EN LA NUBE ---
+export async function cloudSaveDojo(dojo) {
+  const db = getDb();
+  if (!db || !dojo?.id) return false;
+
+  try {
+    const dojoRef = doc(db, 'tournaments', 'main_tournament', 'dojos', dojo.id);
+    await setDoc(dojoRef, {
+      ...dojo,
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
+    return true;
+  } catch (err) {
+    console.error('Error guardando dojo en Firebase:', err);
+    return false;
+  }
+}
+
+// --- ELIMINAR DOJO EN LA NUBE ---
+export async function cloudDeleteDojo(dojoId) {
+  const db = getDb();
+  if (!db || !dojoId) return false;
+
+  try {
+    const dojoRef = doc(db, 'tournaments', 'main_tournament', 'dojos', dojoId);
+    await deleteDoc(dojoRef);
+    return true;
+  } catch (err) {
+    console.error('Error eliminando dojo en Firebase:', err);
+    return false;
+  }
+}
+
 // --- GUARDAR AJUSTES DEL TORNEO EN LA NUBE ---
 export async function cloudSaveTournamentSettings(tournament) {
   const db = getDb();
@@ -333,30 +366,113 @@ export async function cloudSaveTournamentSettings(tournament) {
   }
 }
 
-// --- PURGAR A CERO EN LA NUBE ---
+// --- PURGAR MEDIANTE REST API (Fallback de emergencia si falla el SDK) ---
+export async function restApiResetToZero() {
+  const config = getStoredFirebaseConfig() || DEFAULT_FIREBASE_CONFIG;
+  const projectId = config.projectId;
+  if (!projectId) return { success: false, totalDeleted: 0 };
+
+  const baseUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/tournaments/main_tournament`;
+  let totalDeleted = 0;
+
+  for (const col of ['athletes', 'dojos', 'teams']) {
+    try {
+      const res = await fetch(`${baseUrl}/${col}?pageSize=300`);
+      if (res.ok) {
+        const data = await res.json();
+        const documents = data.documents || [];
+        const deletePromises = documents.map(d =>
+          fetch(`https://firestore.googleapis.com/v1/${d.name}`, { method: 'DELETE' })
+            .then(r => { if (r.ok) totalDeleted++; })
+            .catch(() => {})
+        );
+        await Promise.all(deletePromises);
+      }
+    } catch (err) {
+      console.warn(`Error en restApiResetToZero para ${col}:`, err);
+    }
+  }
+
+  return { success: true, totalDeleted };
+}
+
+// --- PURGAR A CERO EN LA NUBE (Elimina atletas, dojos y equipos en lotes seguros) ---
 export async function cloudResetToZero() {
   const db = getDb();
-  if (!db) return false;
+  let deletedAthletes = 0;
+  let deletedDojos = 0;
+  let deletedTeams = 0;
 
+  if (db) {
+    try {
+      // 1. Obtener y borrar atletas en lotes de máximo 100 docs
+      const athletesCol = collection(db, 'tournaments', 'main_tournament', 'athletes');
+      const athSnap = await getDocs(athletesCol);
+      deletedAthletes = athSnap.size;
+      const athDocs = athSnap.docs;
+      for (let i = 0; i < athDocs.length; i += 100) {
+        const batch = writeBatch(db);
+        athDocs.slice(i, i + 100).forEach(d => batch.delete(d.ref));
+        await batch.commit();
+      }
+
+      // 2. Obtener y borrar dojos en lotes de máximo 100 docs
+      const dojosCol = collection(db, 'tournaments', 'main_tournament', 'dojos');
+      const dojosSnap = await getDocs(dojosCol);
+      deletedDojos = dojosSnap.size;
+      const dojoDocs = dojosSnap.docs;
+      for (let i = 0; i < dojoDocs.length; i += 100) {
+        const batch = writeBatch(db);
+        dojoDocs.slice(i, i + 100).forEach(d => batch.delete(d.ref));
+        await batch.commit();
+      }
+
+      // 3. Obtener y borrar equipos (si existen)
+      try {
+        const teamsCol = collection(db, 'tournaments', 'main_tournament', 'teams');
+        const teamsSnap = await getDocs(teamsCol);
+        deletedTeams = teamsSnap.size;
+        const teamDocs = teamsSnap.docs;
+        for (let i = 0; i < teamDocs.length; i += 100) {
+          const batch = writeBatch(db);
+          teamDocs.slice(i, i + 100).forEach(d => batch.delete(d.ref));
+          await batch.commit();
+        }
+      } catch (_) {}
+
+      // 4. Reiniciar documento base del torneo
+      try {
+        const mainDoc = doc(db, 'tournaments', 'main_tournament');
+        await setDoc(mainDoc, {
+          isCleanZero: true,
+          purgedAt: new Date().toISOString(),
+        }, { merge: true });
+      } catch (_) {}
+
+      return {
+        success: true,
+        deletedAthletes,
+        deletedDojos,
+        deletedTeams,
+        method: 'sdk',
+      };
+    } catch (err) {
+      console.warn('Fallo método SDK en cloudResetToZero, ejecutando fallback REST:', err);
+    }
+  }
+
+  // Fallback REST API
   try {
-    const batch = writeBatch(db);
-
-    const athletesCol = collection(db, 'tournaments', 'main_tournament', 'athletes');
-    const athSnap = await getDocs(athletesCol);
-    athSnap.forEach(d => {
-      batch.delete(d.ref);
-    });
-
-    const dojosCol = collection(db, 'tournaments', 'main_tournament', 'dojos');
-    const dojosSnap = await getDocs(dojosCol);
-    dojosSnap.forEach(d => {
-      batch.delete(d.ref);
-    });
-
-    await batch.commit();
-    return true;
+    const restRes = await restApiResetToZero();
+    return {
+      success: true,
+      deletedAthletes: restRes.totalDeleted,
+      deletedDojos: 0,
+      deletedTeams: 0,
+      method: 'rest',
+    };
   } catch (err) {
-    console.error('Error purgando base de datos en Firebase:', err);
-    return false;
+    console.error('Error total purgando base de datos en Firebase:', err);
+    return { success: false, error: err.message };
   }
 }

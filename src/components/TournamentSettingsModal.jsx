@@ -44,6 +44,7 @@ export default function TournamentSettingsModal({
 
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [confirmText, setConfirmText] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
 
   if (!isOpen) return null;
 
@@ -370,14 +371,27 @@ export default function TournamentSettingsModal({
     onClose();
   };
 
-  const handleExecuteReset = () => {
+  const handleExecuteReset = async () => {
     if (confirmText.trim().toUpperCase() !== 'REINICIAR' && confirmText.trim().toUpperCase() !== 'BORRAR') {
       alert('Debes escribir la palabra REINICIAR o BORRAR para confirmar la eliminación total.');
       return;
     }
-    setShowResetConfirm(false);
-    setConfirmText('');
-    onResetAllToZero();
+    setIsResetting(true);
+    try {
+      const res = await onResetAllToZero();
+      setShowResetConfirm(false);
+      setConfirmText('');
+      const countMsg = res && res.deletedAthletes !== undefined
+        ? `\n• Registros de atletas eliminados en la nube: ${res.deletedAthletes}\n• Dojos eliminados en la nube: ${res.deletedDojos || 0}`
+        : '';
+      alert(`¡Torneo limpiado con éxito a 0!${countMsg}\n\nEl sistema local y la base de datos de Firebase están completamente limpios y listos para el próximo torneo.`);
+      onClose();
+    } catch (err) {
+      console.error('Error durante el reinicio:', err);
+      alert('Hubo un detalle al limpiar los registros: ' + err.message);
+    } finally {
+      setIsResetting(false);
+    }
   };
 
   return (
@@ -1255,18 +1269,26 @@ export default function TournamentSettingsModal({
             <div className="flex items-center justify-end gap-2 pt-2">
               <button
                 type="button"
+                disabled={isResetting}
                 onClick={() => { setShowResetConfirm(false); setConfirmText(''); }}
-                className="px-3 py-1.5 text-slate-600 hover:bg-slate-100 rounded text-xs font-semibold"
+                className="px-3 py-1.5 text-slate-600 hover:bg-slate-100 rounded text-xs font-semibold disabled:opacity-50"
               >
                 Cancelar
               </button>
               <button
                 type="button"
                 onClick={handleExecuteReset}
-                disabled={confirmText.trim().toUpperCase() !== 'REINICIAR' && confirmText.trim().toUpperCase() !== 'BORRAR'}
-                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg text-xs shadow-xs disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                disabled={isResetting || (confirmText.trim().toUpperCase() !== 'REINICIAR' && confirmText.trim().toUpperCase() !== 'BORRAR')}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg text-xs shadow-xs disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5"
               >
-                Confirmar y Borrar Todo
+                {isResetting ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Borrando de Firebase...
+                  </>
+                ) : (
+                  'Confirmar y Borrar Todo'
+                )}
               </button>
             </div>
           </div>
