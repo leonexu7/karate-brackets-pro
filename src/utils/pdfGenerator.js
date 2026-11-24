@@ -810,18 +810,20 @@ export function renderStandardBracketPage(doc, bracket, tournament, customBadge 
 }
 
 /**
- * Renderiza una gráfica Multi-Hoja conectada (ej. 3 hojas para categorías grandes de adolescentes)
+ * Renderiza una gráfica Multi-Hoja conectada (ej. 3 o 5 hojas para categorías grandes de adolescentes)
  */
 export function renderMultiPageBracket(doc, multiBracket, tournament) {
   const pages = multiBracket.pages || [];
+  const pouleCount = multiBracket.pouleCount || 2;
 
   pages.forEach((page, index) => {
     if (index > 0) doc.addPage('letter', 'landscape');
 
-    if (page.pageNumber === 1 || page.pageNumber === 2) {
+    if (page.bracket) {
+      // Hojas de Poules clasificatorias (Poule A, Poule B, Poule C, Poule D...)
       renderStandardBracketPage(doc, page.bracket, tournament, page.title);
     } else {
-      // Hoja 3: Cruces Finales con Podio Oficial
+      // Hoja Final: Cruces de Semifinales y Gran Final con Podio Oficial
       const w = doc.internal.pageSize.getWidth();
       drawHeader(doc, tournament, multiBracket.categoryName, multiBracket.tatami, page.title);
       const isFemale = multiBracket.gender === 'F' || (multiBracket.categoryName && multiBracket.categoryName.toUpperCase().includes('FEMENIL'));
@@ -840,11 +842,12 @@ export function renderMultiPageBracket(doc, multiBracket, tournament) {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7.5);
       doc.setTextColor(...COLOR_MUTED);
-      doc.text(page.note, 12 + leftW / 2, 47, { align: 'center' });
+      doc.text(page.note || 'Combates decisivos por campeonato', 12 + leftW / 2, 47, { align: 'center' });
 
       // Cajas de Semifinales cruzadas con renglones para rellenar a mano
       const finalsX = 14;
       const finalsW = leftW - 4;
+      const is4Poules = pouleCount >= 4;
 
       // SF-1
       doc.setFillColor(255, 255, 255);
@@ -864,13 +867,13 @@ export function renderMultiPageBracket(doc, multiBracket, tournament) {
       doc.setTextColor(...COLOR_AKA);
       doc.text('AKA:', finalsX + 5, 64);
       doc.setTextColor(...COLOR_DARK);
-      doc.text('1º Poule A (Hoja 1): ________________________________________', finalsX + 15, 64);
+      doc.text(is4Poules ? '1º Poule A (Hoja 1): ________________________________________' : '1º Poule A (Hoja 1): ________________________________________', finalsX + 15, 64);
       doc.rect(finalsX + finalsW - 13, 60, 8, 5.5);
 
       doc.setTextColor(...COLOR_AO);
       doc.text('AO:', finalsX + 5, 74);
       doc.setTextColor(...COLOR_DARK);
-      doc.text('2º Poule B (Hoja 2): ________________________________________', finalsX + 15, 74);
+      doc.text(is4Poules ? '1º Poule B (Hoja 2): ________________________________________' : '2º Poule B (Hoja 2): ________________________________________', finalsX + 15, 74);
       doc.rect(finalsX + finalsW - 13, 70, 8, 5.5);
 
       // SF-2
@@ -885,13 +888,13 @@ export function renderMultiPageBracket(doc, multiBracket, tournament) {
       doc.setTextColor(...COLOR_AKA);
       doc.text('AKA:', finalsX + 5, 98);
       doc.setTextColor(...COLOR_DARK);
-      doc.text('1º Poule B (Hoja 2): ________________________________________', finalsX + 15, 98);
+      doc.text(is4Poules ? '1º Poule C (Hoja 3): ________________________________________' : '1º Poule B (Hoja 2): ________________________________________', finalsX + 15, 98);
       doc.rect(finalsX + finalsW - 13, 94, 8, 5.5);
 
       doc.setTextColor(...COLOR_AO);
       doc.text('AO:', finalsX + 5, 108);
       doc.setTextColor(...COLOR_DARK);
-      doc.text('2º Poule A (Hoja 1): ________________________________________', finalsX + 15, 108);
+      doc.text(is4Poules ? '1º Poule D (Hoja 4): ________________________________________' : '2º Poule A (Hoja 1): ________________________________________', finalsX + 15, 108);
       doc.rect(finalsX + finalsW - 13, 104, 8, 5.5);
 
       // GRAN FINAL

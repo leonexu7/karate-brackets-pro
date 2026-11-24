@@ -28,7 +28,12 @@ export default function AthleteList({
 
   const filteredAthletes = useMemo(() => {
     return (athletes || []).filter(a => {
-      const matchSearch = a.fullName.toLowerCase().includes(searchTerm.toLowerCase());
+      const s = searchTerm.toLowerCase();
+      const matchSearch =
+        (a.fullName || '').toLowerCase().includes(s) ||
+        (a.dojoName || '').toLowerCase().includes(s) ||
+        (a.sensei || '').toLowerCase().includes(s) ||
+        (a.city || '').toLowerCase().includes(s);
       const matchDojo = filterDojo === 'all' || a.dojoId === filterDojo;
       const matchKyu = filterKyu === 'all' || a.beltId === filterKyu;
       const matchGender = filterGender === 'all' || a.gender === filterGender;

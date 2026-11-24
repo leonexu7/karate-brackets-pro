@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { Trophy, Printer, Filter, Search, Award, ArrowDownUp, Shield, AlertCircle } from 'lucide-react';
+import { Trophy, Printer, Filter, Search, Award, ArrowDownUp, Shield, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import CuartetaCard from './CuartetaCard';
 import BracketCard from './BracketCard';
+import { generateFullTournamentPDF } from '../utils/pdfGenerator';
 
 function getBracketAgeRank(b) {
   const name = (b.categoryName || '').toLowerCase();
@@ -33,6 +34,12 @@ export default function BracketsView({
   const [filterModality, setFilterModality] = useState('all'); // 'all', 'kata', 'kumite'
   const [sortOrder, setSortOrder] = useState('age_asc'); // 'age_asc', 'age_desc', 'name_asc', 'tatami'
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Paginación para alto rendimiento con más de 200 competidores
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 15;
+  const [isGeneratingFilteredPDF, setIsGeneratingFilteredPDF] = useState(false);
+  const [filteredPDFProgress, setFilteredPDFProgress] = useState(0);
 
   const filteredBrackets = useMemo(() => {
     const list = brackets.filter(b => {
@@ -92,6 +99,24 @@ export default function BracketsView({
     });
   }, [brackets, filterTatami, filterType, filterGender, filterModality, sortOrder, searchTerm]);
 
+  const totalPages = Math.ceil(filteredBrackets.length / pageSize) || 1;
+  const paginatedBrackets = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredBrackets.slice(start, start + pageSize);
+  }, [filteredBrackets, currentPage, pageSize]);
+
+  const handleDownloadFilteredPDF = async () => {
+    if (filteredBrackets.length === 0) return;
+    setIsGeneratingFilteredPDF(true);
+    setFilteredPDFProgress(0);
+    try {
+      await generateFullTournamentPDF(filteredBrackets, tournament, (p) => setFilteredPDFProgress(p));
+    } finally {
+      setIsGeneratingFilteredPDF(false);
+      setFilteredPDFProgress(0);
+    }
+  };
+
   const cuartetasCount = brackets.filter(b => b.type === 'cuarteta').length;
   const standardCount = brackets.filter(b => b.type !== 'cuarteta').length;
 
@@ -108,7 +133,7 @@ export default function BracketsView({
               type="text"
               placeholder="Buscar categoría de gráfica..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
               className="w-full pl-9 pr-3 py-1.5 text-xs border border-tatami-300 rounded-lg outline-hidden focus:ring-1 focus:ring-aka"
             />
           </div>
@@ -118,7 +143,7 @@ export default function BracketsView({
             <ArrowDownUp className="w-3.5 h-3.5 text-tatami-500" />
             <select
               value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value)}
+              onChange={(e) => { setSortOrder(e.target.value); setCurrentPage(1); }}
               className="px-2.5 py-1.5 text-xs border border-tatami-300 rounded-lg bg-white text-tatami-700 font-medium"
               title="Criterio de ordenamiento"
             >
@@ -132,7 +157,7 @@ export default function BracketsView({
           {/* Filtro Rama (Varonil / Femenil / Mixto) */}
           <select
             value={filterGender}
-            onChange={(e) => setFilterGender(e.target.value)}
+            onChange={(e) => { setFilterGender(e.target.value); setCurrentPage(1); }}
             className="px-2.5 py-1.5 text-xs border border-tatami-300 rounded-lg bg-white text-tatami-700"
           >
             <option value="all">Todas las Ramas</option>
@@ -144,7 +169,7 @@ export default function BracketsView({
           {/* Filtro Modalidad (Kata / Kumite / Doble / Especialistas) */}
           <select
             value={filterModality}
-            onChange={(e) => setFilterModality(e.target.value)}
+            onChange={(e) => { setFilterModality(e.target.value); setCurrentPage(1); }}
             className="px-2.5 py-1.5 text-xs border border-tatami-300 rounded-lg bg-white text-tatami-700 font-medium"
             title="Filtrar por perfil de modalidad"
           >
@@ -159,7 +184,7 @@ export default function BracketsView({
           {/* Filtro Tatami */}
           <select
             value={filterTatami}
-            onChange={(e) => setFilterTatami(e.target.value)}
+            onChange={(e) => { setFilterTatami(e.target.value); setCurrentPage(1); }}
             className="px-2.5 py-1.5 text-xs border border-tatami-300 rounded-lg bg-white text-tatami-700"
           >
             <option value="all">Todos los Tatamis (1 a {tournament.tatamisCount})</option>
@@ -171,7 +196,7 @@ export default function BracketsView({
           {/* Filtro Tipo de Gráfica */}
           <select
             value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
+            onChange={(e) => { setFilterType(e.target.value); setCurrentPage(1); }}
             className="px-2.5 py-1.5 text-xs border border-tatami-300 rounded-lg bg-white text-tatami-700"
           >
             <option value="all">Formato: Todos ({brackets.length})</option>
@@ -180,17 +205,34 @@ export default function BracketsView({
           </select>
         </div>
 
-        {/* Botón Maestro PDF */}
-        <button
-          onClick={onDownloadAllPDF}
-          disabled={isGeneratingPDF || brackets.length === 0}
-          className="px-4 py-2 bg-aka hover:bg-aka-dark text-white rounded-lg text-xs font-semibold shadow-xs flex items-center gap-2 transition-colors disabled:opacity-50"
-        >
-          <Printer className="w-4 h-4" />
-          <span>
-            {isGeneratingPDF ? `Procesando Cuaderno (${pdfProgress}%)...` : `Descargar Cuaderno Completo (${brackets.length} Gráficas)`}
-          </span>
-        </button>
+        {/* Botones de Descarga PDF */}
+        <div className="flex flex-wrap items-center gap-2">
+          {filteredBrackets.length > 0 && filteredBrackets.length < brackets.length && (
+            <button
+              type="button"
+              onClick={handleDownloadFilteredPDF}
+              disabled={isGeneratingFilteredPDF || isGeneratingPDF}
+              className="px-3.5 py-2 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-semibold shadow-xs flex items-center gap-2 transition-colors disabled:opacity-50 cursor-pointer"
+              title="Descargar en PDF únicamente las gráficas filtradas en pantalla"
+            >
+              <Printer className="w-4 h-4 text-rose-400" />
+              <span>
+                {isGeneratingFilteredPDF ? `Procesando (${filteredPDFProgress}%)...` : `Descargar Selección (${filteredBrackets.length} Gráficas)`}
+              </span>
+            </button>
+          )}
+
+          <button
+            onClick={onDownloadAllPDF}
+            disabled={isGeneratingPDF || isGeneratingFilteredPDF || brackets.length === 0}
+            className="px-4 py-2 bg-aka hover:bg-aka-dark text-white rounded-lg text-xs font-semibold shadow-xs flex items-center gap-2 transition-colors disabled:opacity-50 cursor-pointer"
+          >
+            <Printer className="w-4 h-4" />
+            <span>
+              {isGeneratingPDF ? `Procesando Cuaderno (${pdfProgress}%)...` : `Descargar Cuaderno Completo (${brackets.length} Gráficas)`}
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* Rótulo explicativo de las Cuartetas Infantiles */}
@@ -213,7 +255,7 @@ export default function BracketsView({
         </div>
       ) : (
         <div className="space-y-6">
-          {filteredBrackets.map(bracket => (
+          {paginatedBrackets.map(bracket => (
             bracket.type === 'cuarteta' ? (
               <CuartetaCard
                 key={bracket.id}
@@ -228,6 +270,44 @@ export default function BracketsView({
               />
             )
           ))}
+
+          {/* Barra de Paginación para alto volumen de gráficas */}
+          {totalPages > 1 && (
+            <div className="bg-white p-3.5 rounded-xl border border-tatami-200 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
+              <span className="text-slate-600 font-medium">
+                Mostrando gráficas <strong>{(currentPage - 1) * pageSize + 1}</strong> a <strong>{Math.min(currentPage * pageSize, filteredBrackets.length)}</strong> de <strong>{filteredBrackets.length}</strong>
+              </span>
+
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => { setCurrentPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                  disabled={currentPage === 1}
+                  className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold flex items-center gap-1 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Anterior</span>
+                </button>
+
+                <div className="flex items-center gap-1 px-1">
+                  <span className="text-slate-500">Página</span>
+                  <span className="font-bold text-slate-900 bg-slate-100 px-2.5 py-0.5 rounded border border-slate-200">
+                    {currentPage} / {totalPages}
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => { setCurrentPage(p => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                  disabled={currentPage === totalPages}
+                  className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold flex items-center gap-1 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+                >
+                  <span>Siguiente</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

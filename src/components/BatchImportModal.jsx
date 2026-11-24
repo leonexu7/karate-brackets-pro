@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { X, FileSpreadsheet, Upload, Download, AlertCircle, CheckCircle2, FileCheck } from 'lucide-react';
 import { getKyuInfo } from '../constants/belts';
-import { downloadExcelTemplate, parseExcelFile } from '../utils/excelHandler';
+import { downloadExcelTemplate, parseExcelFile, normalizeExcelDate } from '../utils/excelHandler';
 
 export default function BatchImportModal({ isOpen, onClose, onImportAthletes, dojos }) {
   const [inputText, setInputText] = useState('');
@@ -62,19 +62,31 @@ Diego Hernández, 2011-03-15, M, 3 kyu, 54.2, 168`;
       if (idx === 0 && line.toLowerCase().includes('nombre')) return;
       const parts = line.includes('\t') ? line.split('\t') : line.split(',');
       if (parts.length >= 2) {
-        const fullName = parts[0]?.trim();
-        const birthDate = parts[1]?.trim();
+        const rawName = parts[0]?.trim();
+        const fullName = rawName?.replace(/\s+/g, ' ');
+        const rawDate = parts[1]?.trim();
+        const birthDate = normalizeExcelDate(rawDate) || '2016-01-01';
         const gender = (parts[2]?.trim().toUpperCase().startsWith('F') ? 'F' : 'M');
         const kyuInput = parts[3]?.trim() || '10_kyu';
         const kyu = getKyuInfo(kyuInput);
         const weight = parseFloat(parts[4]?.trim()) || null;
         const height = parseFloat(parts[5]?.trim()) || null;
 
-        if (fullName) {
+        let modalities = ['kumite_ind', 'kata_ind'];
+        const possibleMod = (parts[6]?.trim() || parts[7]?.trim() || '').toLowerCase();
+        if (possibleMod) {
+          if (possibleMod.includes('kata') && !possibleMod.includes('kumi') && !possibleMod.includes('ambas')) {
+            modalities = ['kata_ind'];
+          } else if ((possibleMod.includes('kumi') || possibleMod.includes('combate')) && !possibleMod.includes('kata') && !possibleMod.includes('ambas')) {
+            modalities = ['kumite_ind'];
+          }
+        }
+
+        if (fullName && fullName.length >= 2) {
           parsed.push({
             id: `batch-${Date.now()}-${idx}`,
             fullName,
-            birthDate: birthDate.match(/^\d{4}-\d{2}-\d{2}$/) ? birthDate : '2016-01-01',
+            birthDate,
             gender,
             beltId: kyu.id,
             kyuName: kyu.name,
@@ -82,7 +94,7 @@ Diego Hernández, 2011-03-15, M, 3 kyu, 54.2, 168`;
             weight,
             height,
             dojoId: selectedDojoId,
-            modalities: ['kumite_ind', 'kata_ind'],
+            modalities,
           });
         }
       }

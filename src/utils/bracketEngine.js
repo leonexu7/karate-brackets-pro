@@ -1,8 +1,8 @@
 /**
  * Motor de Generación de Llaves de Karate (Brackets)
  * - Cuartetas infantiles (<= 8-9 años) con 4 medallas garantizadas (1 por hoja)
- * - Brackets estándar de 8 y 16 competidores con separación de dojos (Anti-clash)
- * - Brackets multi-hoja para categorías grandes (>16 atletas, ej. 3 hojas vinculadas)
+ * - Brackets estándar de 8 y 16 competidores con separación de dojos (Anti-clash óptimo)
+ * - Brackets multi-hoja dinámicos para categorías grandes (>16 atletas, ej. 3 a 5 hojas vinculadas)
  */
 
 /**
@@ -44,6 +44,143 @@ export function separateDojos(athletes) {
 }
 
 /**
+ * Asigna posiciones (slots) exactas en la llave asegurando que los competidores
+ * del mismo dojo queden en mitades opuestas y NUNCA se enfrenten en primera ronda.
+ */
+export function assignAntiClashSlots(athletes, bracketSize = 8) {
+  const numMatches = bracketSize / 2;
+  const slots = new Array(bracketSize).fill(null);
+  if (!athletes || athletes.length === 0) return slots;
+
+  // Si son solo 2 competidores, colocarlos en extremos opuestos (Match 1 Aka y Último Match Ao)
+  // de modo que ambos aparezcan directamente en la Gran Final
+  if (athletes.length === 2) {
+    slots[0] = athletes[0];
+    slots[bracketSize - 1] = athletes[1];
+    return slots;
+  }
+
+  // 1. Agrupar atletas por Dojo
+  const byDojo = {};
+  athletes.forEach(a => {
+    const dId = a.dojoId || a.dojoName || 'sin_dojo';
+    if (!byDojo[dId]) byDojo[dId] = [];
+    byDojo[dId].push(a);
+  });
+
+  const sortedDojos = Object.keys(byDojo).sort((a, b) => byDojo[b].length - byDojo[a].length);
+
+  // Orden de preferencia de partidos alternando mitades opuestas (arriba, abajo, centro):
+  const matchOrder8 = [0, 3, 1, 2];
+  const matchOrder16 = [0, 7, 3, 4, 1, 6, 2, 5];
+  const matchOrder32 = [0, 15, 7, 8, 3, 12, 4, 11, 1, 14, 6, 9, 2, 13, 5, 10];
+  const matchOrder = bracketSize === 32 ? matchOrder32 : (bracketSize === 16 ? matchOrder16 : matchOrder8);
+
+  const matchAssignments = Array.from({ length: numMatches }, () => []);
+
+  function findBestMatch(dojoId) {
+    // Prioridad 1: Match completamente vacío (para recibir Bye si faltan atletas)
+    for (const mIdx of matchOrder) {
+      if (matchAssignments[mIdx].length === 0) {
+        return mIdx;
+      }
+    }
+    // Prioridad 2: Match con 1 atleta de un DOJO DIFERENTE
+    for (const mIdx of matchOrder) {
+      if (matchAssignments[mIdx].length === 1) {
+        const existingDojo = matchAssignments[mIdx][0].dojoId || matchAssignments[mIdx][0].dojoName;
+        if (existingDojo !== dojoId) {
+          return mIdx;
+        }
+      }
+    }
+    // Prioridad 3: Solo si un dojo satura más del 50% de la categoría
+    for (const mIdx of matchOrder) {
+      if (matchAssignments[mIdx].length === 1) {
+        return mIdx;
+      }
+    }
+    return -1;
+  }
+
+  // Asignar alternando entre dojos (ronda por ronda)
+  let hasMore = true;
+  let roundIdx = 0;
+  while (hasMore) {
+    hasMore = false;
+    for (const dId of sortedDojos) {
+      const group = byDojo[dId];
+      if (roundIdx < group.length) {
+        hasMore = true;
+        const ath = group[roundIdx];
+        const bestM = findBestMatch(dId);
+        if (bestM !== -1) {
+          matchAssignments[bestM].push(ath);
+        }
+      }
+    }
+    roundIdx++;
+  }
+
+  // Mapear matchAssignments a slots:
+  for (let m = 0; m < numMatches; m++) {
+    const assigned = matchAssignments[m];
+    if (assigned.length === 1) {
+      slots[m * 2] = assigned[0];
+      slots[m * 2 + 1] = null;
+    } else if (assigned.length >= 2) {
+      slots[m * 2] = assigned[0];
+      slots[m * 2 + 1] = assigned[1];
+    }
+  }
+
+  return slots;
+}
+
+/**
+ * Organiza los 4 slots de una cuarteta garantizando que compañeros de dojo
+ * queden en Semifinales opuestas (Semi 1 vs Semi 2).
+ */
+function slotCuartetaAntiClash(chunk) {
+  if (!chunk || chunk.length === 0) return [null, null, null, null];
+  if (chunk.length === 1) return [chunk[0], null, null, null];
+  if (chunk.length === 2) return [chunk[0], chunk[1], null, null];
+
+  const byDojo = {};
+  chunk.forEach(a => {
+    const dId = a.dojoId || a.dojoName || 'sin_dojo';
+    if (!byDojo[dId]) byDojo[dId] = [];
+    byDojo[dId].push(a);
+  });
+
+  const groups = Object.values(byDojo).sort((a, b) => b.length - a.length);
+  const slots = [null, null, null, null];
+
+  if (groups[0].length >= 2) {
+    // Teammate 1 en Semifinal 1 (slot 0 Aka)
+    slots[0] = groups[0][0];
+    // Teammate 2 en Semifinal 2 (slot 2 Aka)
+    slots[2] = groups[0][1];
+
+    const remaining = [];
+    for (let i = 2; i < groups[0].length; i++) remaining.push(groups[0][i]);
+    for (let g = 1; g < groups.length; g++) {
+      for (const a of groups[g]) remaining.push(a);
+    }
+
+    if (remaining[0]) slots[1] = remaining[0]; // Rival de Semi 1
+    if (remaining[1]) slots[3] = remaining[1]; // Rival de Semi 2
+  } else {
+    // Dojos distintos
+    slots[0] = chunk[0] || null;
+    slots[1] = chunk[1] || null;
+    slots[2] = chunk[2] || null;
+    slots[3] = chunk[3] || null;
+  }
+  return slots;
+}
+
+/**
  * Genera cuartetas infantiles (<= 8-9 años)
  * Si hay 4 niños -> 1 cuarteta
  * Si hay 7 -> Cuarteta 1 (4 niños), Cuarteta 2 (3 niños con 1 bye)
@@ -59,17 +196,9 @@ export function generateCuartetas(categoryKey, categoryName, athletes, tatamiNum
 
   for (let i = 0; i < athletes.length; i += chunkSize) {
     const rawChunk = athletes.slice(i, i + chunkSize);
-    // Aplicar separación de dojos dentro del grupo de estatura homogénea
-    const chunk = separateDojos(rawChunk);
+    // Aplicar separación de dojos en semifinales opuestas dentro de la cuarteta
+    const slots = slotCuartetaAntiClash(rawChunk);
     const cuartetaIndex = Math.floor(i / chunkSize) + 1;
-
-    // Rellenar hasta 4 con null (Bye) si la última cuarteta tiene 2 o 3 competidores
-    const slots = [
-      chunk[0] || null,
-      chunk[1] || null,
-      chunk[2] || null,
-      chunk[3] || null,
-    ];
 
     // Detectar rango de estatura del grupo
     const validHeights = rawChunk.map(a => parseFloat(a.height) || 0).filter(h => h > 0);
@@ -102,7 +231,7 @@ export function generateCuartetas(categoryKey, categoryName, athletes, tatamiNum
       // Estructura de combates:
       // Si son exactamente 2 atletas: van directo a la Gran Final
       // Si son 3 o 4 atletas: Semifinal 1, Semifinal 2 y Gran Final
-      matches: chunk.length === 2 ? [
+      matches: rawChunk.length === 2 ? [
         {
           id: `${cuartetaId}_m1`,
           matchNumber: 1,
@@ -184,16 +313,10 @@ const SEEDING_ORDER_16 = [0, 15, 8, 7, 4, 11, 12, 3, 2, 13, 10, 5, 6, 9, 14, 1];
 export function generateStandardBracket(categoryKey, categoryName, athletes, tatamiNumber = 1, forceSize = null, gender = null) {
   const count = athletes.length;
   const bracketSize = forceSize || (count <= 8 ? 8 : 16);
-
-  const separated = separateDojos(athletes);
   const resolvedGender = gender || (categoryName.toUpperCase().includes('FEMENIL') ? 'F' : 'M');
 
-  // Colocar competidores en las posiciones de siembra según el tamaño
-  const slots = new Array(bracketSize).fill(null);
-  const seedingOrder = bracketSize === 16 ? SEEDING_ORDER_16 : SEEDING_ORDER_8;
-  for (let i = 0; i < separated.length && i < bracketSize; i++) {
-    slots[seedingOrder[i]] = separated[i];
-  }
+  // Colocar competidores con el algoritmo Anti-Choque garantizado
+  const slots = assignAntiClashSlots(athletes, bracketSize);
 
   const bracketId = `bracket_${categoryKey}`;
   const rounds = [];
@@ -345,17 +468,86 @@ export function generateStandardBracket(categoryKey, categoryName, athletes, tat
 
 /**
  * Genera una gráfica multi-hoja conectada para categorías grandes (> 16 competidores)
- * Divide en Poule A (Hoja 1 de 3), Poule B (Hoja 2 de 3) y Finales Cruzadas (Hoja 3 de 3).
+ * Escala dinámicamente:
+ * - 17 a 32 competidores: 2 Poules de 16 (Poule A y B) + Hoja de Cruces Finales (3 hojas)
+ * - 33 a 64 competidores: 4 Poules de 16 (Poule A, B, C, D) + Hoja de Cruces Finales (5 hojas)
+ * - > 64 competidores: 8 Poules de 16 + Hoja de Cruces Finales
+ * Garantiza que NINGÚN competidor sea descartado y que los compañeros de dojo
+ * queden repartidos equitativamente entre las diferentes hojas clasificatorias.
  */
 export function generateMultiPageBracket(categoryKey, categoryName, athletes, tatamiNumber = 1, gender = null) {
-  const separated = separateDojos(athletes);
-  const mid = Math.ceil(separated.length / 2);
-  const pouleA_athletes = separated.slice(0, mid);
-  const pouleB_athletes = separated.slice(mid);
+  const totalCount = athletes.length;
+  const pouleCount = totalCount <= 32 ? 2 : (totalCount <= 64 ? 4 : 8);
+  const pouleLetters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
   const resolvedGender = gender || (categoryName.toUpperCase().includes('FEMENIL') ? 'F' : 'M');
 
-  const pouleA = generateStandardBracket(`${categoryKey}_pouleA`, `${categoryName} - Poule A`, pouleA_athletes, tatamiNumber, 16, resolvedGender);
-  const pouleB = generateStandardBracket(`${categoryKey}_pouleB`, `${categoryName} - Poule B`, pouleB_athletes, tatamiNumber, 16, resolvedGender);
+  // Separar los atletas entre las poules equilibrando dojos
+  const byDojo = {};
+  athletes.forEach(a => {
+    const dId = a.dojoId || a.dojoName || 'sin_dojo';
+    if (!byDojo[dId]) byDojo[dId] = [];
+    byDojo[dId].push(a);
+  });
+
+  const pouleBuckets = Array.from({ length: pouleCount }, () => []);
+  let pIdx = 0;
+  Object.values(byDojo).sort((a, b) => b.length - a.length).forEach(group => {
+    group.forEach(ath => {
+      pouleBuckets[pIdx].push(ath);
+      pIdx = (pIdx + 1) % pouleCount;
+    });
+  });
+
+  const pages = [];
+  const totalPages = pouleCount + 1;
+
+  for (let i = 0; i < pouleCount; i++) {
+    const letter = pouleLetters[i];
+    const pAthletes = pouleBuckets[i];
+    const bracketSize = pAthletes.length <= 8 ? 8 : 16;
+    const stdBracket = generateStandardBracket(
+      `${categoryKey}_poule_${letter}`,
+      `${categoryName} - Poule ${letter}`,
+      pAthletes,
+      tatamiNumber,
+      bracketSize,
+      resolvedGender
+    );
+
+    pages.push({
+      pageNumber: i + 1,
+      totalPages,
+      pouleLetter: letter,
+      title: `Hoja ${i + 1} de ${totalPages} — Poule ${letter} (Rondas Clasificatorias)`,
+      note: pouleCount === 2
+        ? 'Los 2 finalistas de esta hoja avanzan a las Semifinales en la Hoja Final'
+        : 'El campeón de esta Poule avanza a las Semifinales en la Hoja Final',
+      bracket: stdBracket,
+    });
+  }
+
+  // Hoja Final de Cruces
+  const finalsMatches = pouleCount === 2 ? [
+    { id: 'semi_cruz_1', matchNumber: 'SF-1', akaLabel: 'Ganador Poule A (Hoja 1)', aoLabel: 'Subcampeón Poule B (Hoja 2)' },
+    { id: 'semi_cruz_2', matchNumber: 'SF-2', akaLabel: 'Ganador Poule B (Hoja 2)', aoLabel: 'Subcampeón Poule A (Hoja 1)' },
+    { id: 'final_oro', matchNumber: 'FINAL', akaLabel: 'Ganador SF-1', aoLabel: 'Ganador SF-2' },
+  ] : [
+    { id: 'semi_cruz_1', matchNumber: 'SF-1', akaLabel: 'Campeón Poule A (Hoja 1)', aoLabel: 'Campeón Poule B (Hoja 2)' },
+    { id: 'semi_cruz_2', matchNumber: 'SF-2', akaLabel: 'Campeón Poule C (Hoja 3)', aoLabel: 'Campeón Poule D (Hoja 4)' },
+    { id: 'final_oro', matchNumber: 'FINAL', akaLabel: 'Ganador SF-1', aoLabel: 'Ganador SF-2' },
+  ];
+
+  pages.push({
+    pageNumber: totalPages,
+    totalPages,
+    title: `Hoja ${totalPages} de ${totalPages} — Semifinales Cruzadas y Gran Final`,
+    note: 'Combates decisivos por Medalla de Oro, Plata y Bronces',
+    finalsBracket: {
+      name: 'Cruces Finales',
+      pouleCount,
+      matches: finalsMatches,
+    }
+  });
 
   return {
     id: `multipage_${categoryKey}`,
@@ -365,37 +557,9 @@ export function generateMultiPageBracket(categoryKey, categoryName, athletes, ta
     tatami: tatamiNumber,
     gender: resolvedGender,
     totalAthletes: athletes.length,
-    totalPages: 3,
-    pages: [
-      {
-        pageNumber: 1,
-        totalPages: 3,
-        title: 'Hoja 1 de 3 — Poule A (Rondas Clasificatorias)',
-        note: 'Los 2 finalistas de esta hoja avanzan a las Semifinales en la Hoja 3',
-        bracket: pouleA,
-      },
-      {
-        pageNumber: 2,
-        totalPages: 3,
-        title: 'Hoja 2 de 3 — Poule B (Rondas Clasificatorias)',
-        note: 'Los 2 finalistas de esta hoja avanzan a las Semifinales en la Hoja 3',
-        bracket: pouleB,
-      },
-      {
-        pageNumber: 3,
-        totalPages: 3,
-        title: 'Hoja 3 de 3 — Semifinales Cruzadas y Gran Final',
-        note: 'Combates decisivos por Medalla de Oro, Plata y Bronces',
-        finalsBracket: {
-          name: 'Cruces Finales',
-          matches: [
-            { id: 'semi_cruz_1', matchNumber: 'SF-1', akaLabel: 'Ganador Poule A (Hoja 1)', aoLabel: 'Subcampeón Poule B (Hoja 2)' },
-            { id: 'semi_cruz_2', matchNumber: 'SF-2', akaLabel: 'Ganador Poule B (Hoja 2)', aoLabel: 'Subcampeón Poule A (Hoja 1)' },
-            { id: 'final_oro', matchNumber: 'FINAL', akaLabel: 'Ganador SF-1', aoLabel: 'Ganador SF-2' },
-          ]
-        }
-      }
-    ]
+    pouleCount,
+    totalPages,
+    pages,
   };
 }
 
