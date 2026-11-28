@@ -252,7 +252,7 @@ export default function PrintDispatcherModal({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Opción Boca Arriba (Face-Up / Inkjet) */}
+              {/* Opción Boca Arriba (Face-Up / Inkjet) - ORDEN INVERSO */}
               <label
                 onClick={() => setTrayOrder('face_up')}
                 className={`p-3 rounded-lg border cursor-pointer transition-all flex items-start gap-3 ${
@@ -269,17 +269,20 @@ export default function PrintDispatcherModal({
                   className="mt-0.5 text-rose-600 focus:ring-rose-500"
                 />
                 <div>
-                  <div className="flex items-center gap-1.5 font-bold text-xs text-rose-950">
-                    <span>Charola Boca Arriba (Face-Up / Inyección de Tinta)</span>
-                    <span className="px-1.5 py-0.2 bg-rose-600 text-white text-[9px] rounded font-bold">RECOMENDADO</span>
+                  <div className="flex items-center gap-1.5 font-bold text-xs text-rose-950 flex-wrap">
+                    <span>Orden INVERSO (Última a Primera Página)</span>
+                    <span className="px-1.5 py-0.2 bg-rose-600 text-white text-[9px] rounded font-bold">INKJET / BOCA ARRIBA</span>
                   </div>
+                  <p className="text-[11px] text-slate-700 mt-1 leading-normal">
+                    <strong>¿Qué hace el PDF?</strong> Genera las hojas al revés (adultos primero, niños al final).
+                  </p>
                   <p className="text-[11px] text-slate-600 mt-1 leading-normal">
-                    Cada hoja sale visible hacia arriba y cae sobre la anterior. El sistema <strong>invierte el orden de impresión</strong> para que, al terminar el fajo, <strong>¡la hoja #1 de los niños quede arriba lista para usarse!</strong>
+                    <strong>¿Para qué impresora es?</strong> Para impresoras de inyección de tinta (Epson EcoTank, HP InkTank, Brother) donde el papel sale <strong>con el texto visible hacia arriba</strong>. Al imprimirse al revés, la hoja #1 (niños de -5 años) cae al último y queda <strong>hasta arriba del montón en la charola</strong> lista para entregar.
                   </p>
                 </div>
               </label>
 
-              {/* Opción Boca Abajo (Face-Down / Láser) */}
+              {/* Opción Boca Abajo (Face-Down / Láser) - ORDEN NORMAL */}
               <label
                 onClick={() => setTrayOrder('face_down')}
                 className={`p-3 rounded-lg border cursor-pointer transition-all flex items-start gap-3 ${
@@ -296,11 +299,15 @@ export default function PrintDispatcherModal({
                   className="mt-0.5 text-sky-600 focus:ring-sky-500"
                 />
                 <div>
-                  <div className="font-bold text-xs text-sky-950">
-                    Charola Boca Abajo (Face-Down / Impresora Láser)
+                  <div className="flex items-center gap-1.5 font-bold text-xs text-sky-950 flex-wrap">
+                    <span>Orden NORMAL (Página 1 a la Última)</span>
+                    <span className="px-1.5 py-0.2 bg-sky-700 text-white text-[9px] rounded font-bold">LÁSER / COPIADORAS</span>
                   </div>
+                  <p className="text-[11px] text-slate-700 mt-1 leading-normal">
+                    <strong>¿Qué hace el PDF?</strong> Genera las hojas al derecho (página 1 de niños primero, adultos al final).
+                  </p>
                   <p className="text-[11px] text-slate-600 mt-1 leading-normal">
-                    Las hojas salen con el texto hacia abajo (como las fotocopiadoras). Imprime en orden normal (1 a N). Al voltear el paquete de hojas, la #1 queda arriba.
+                    <strong>¿Para qué impresora es?</strong> Para impresoras láser de oficina o copiadoras industriales donde las hojas salen <strong>con el texto hacia abajo</strong> en una ranura interna. La máquina ya las apila ordenadamente y no hace falta invertir el archivo.
                   </p>
                 </div>
               </label>
